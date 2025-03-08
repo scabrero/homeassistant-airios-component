@@ -1,0 +1,15 @@
+{
+  "domain": "airios",
+  "name": "Airios Ventilation Systems",
+  "codeowners": ["@scabrero"],
+  "config_flow": true,
+  "dependencies": ["usb"],
+  "documentation": "https://github.com/scabrero/homeassistant-airios-component#readme",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/scabrero/homeassistant-airios-component/issues",
+  "loggers": ["pymodbus", "pyairios"],
+  "quality_scale": "bronze",
+  "requirements": ["pyairios==1.0.5"],
+  "version": "1.0.0"
+}

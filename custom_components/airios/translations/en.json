@@ -1,0 +1,156 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "menu_options": {
+          "serial": "Serial",
+          "network": "Ethernet"
+        },
+        "title": "Type of RF bridge"
+      },
+      "network": {
+        "title": "Set up Ethernet RF bridge",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "address": "Modbus device address"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of the RF bridge",
+          "port": "The port on which Modbus server is listening",
+          "address": "The address of the Modbus device"
+        }
+      },
+      "serial": {
+        "title": "Set up serial RF bridge",
+        "data": {
+          "device": "Select device",
+          "address": "Modbus device address"
+        },
+        "data_description": {
+          "device": "The serial port to which the bridge is connected",
+          "address": "The address of the Modbus device"
+        }
+      },
+      "serial_manual_path": {
+        "data": {
+          "device": "USB device path"
+        },
+        "title": "Path"
+      }
+    },
+    "error": {
+      "unexpected_product_id": "Unexpected product ID",
+      "cannot_connect": "Failed to connect",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_in_progress": "Configuration flow is already in progress",
+      "already_configured": "Device is already configured",
+      "reconfigure_successful": "Re-configuration was successful",
+      "unique_id_mismatch": "Please ensure you reconfigure against the same device."
+    }
+  },
+  "config_subentries": {
+    "controller": {
+      "initiate_flow": {
+        "user": "Bind a controller"
+      },
+      "step": {
+        "user": {
+          "title": "Bind a controller",
+          "description": "A controller is typically a ventilation unit.",
+          "data": {
+            "name": "Name",
+            "device": "Product to bind",
+            "rf_address": "Serial Number (optional)"
+          }
+        },
+        "do_bind_controller": {
+          "title": "Bind in progress"
+        }
+      },
+      "progress": {
+        "bind_controller": "Please wait while the bridge binds to the controller."
+      },
+      "abort": {
+        "not_available": "Bind status not available",
+        "outgoing_binding_initialized": "Bind in progress",
+        "outgoing_binding_completed": "Binding completed",
+        "incoming_binding_active": "Bind in progress",
+        "incoming_binding_completed": "Binding completed",
+        "outgoing_binding_failed_no_answer": "Binding failed, no answer",
+        "outgoing_binding_failed_incompatible_device": "Binding failed, incompatible device",
+        "outgoing_binding_failed_node_list_full": "Binding failed, node list full",
+        "outgoing_binding_failed_modbus_address_invalid": "Binding failed, invalid Modbus address",
+        "incoming_binding_window_closed_without_binding_a_product": "Binding failed, no answer",
+        "binding_failed_serial_number_invalid": "Binding failed, invalid serial number",
+        "unknown_binding_command": "Binding failed, unknown binding command",
+        "unknown_product_type": "Binding failed, unknown product ID",
+        "bind_failed": "Failed to bind controller. Check the logs."
+      }
+    },
+    "accessory": {
+      "initiate_flow": {
+        "user": "Bind an accessory"
+      },
+      "step": {
+        "user": {
+          "title": "Bind an accessory",
+          "description": "An accessory is a remote control or a sensor already bound to a controller",
+          "data": {
+            "name": "Name",
+            "device": "Product to bind",
+            "rf_address": "Serial Number (optional)",
+            "controller_serial_number": "Controller to bind the accessory to"
+          }
+        },
+        "do_bind_accessory": {
+          "title": "Bind in progress"
+        }
+      },
+      "progress": {
+        "bind_accessory": "Waiting for accessory. Perform accessory binding procedure now."
+      },
+      "abort": {
+        "not_available": "Bind status not available",
+        "outgoing_binding_initialized": "Bind in progress",
+        "outgoing_binding_completed": "Binding completed",
+        "incoming_binding_active": "Bind in progress",
+        "incoming_binding_completed": "Binding completed",
+        "outgoing_binding_failed_no_answer": "Binding failed, no answer",
+        "outgoing_binding_failed_incompatible_device": "Binding failed, incompatible device",
+        "outgoing_binding_failed_node_list_full": "Binding failed, node list full",
+        "outgoing_binding_failed_modbus_address_invalid": "Binding failed, invalid Modbus address",
+        "incoming_binding_window_closed_without_binding_a_product": "Binding failed, no answer",
+        "binding_failed_serial_number_invalid": "Binding failed, invalid serial number",
+        "unknown_binding_command": "Binding failed, unknown binding command",
+        "unknown_product_type": "Binding failed, unknown product ID",
+        "bind_failed": "Failed to bind controller. Check the logs."
+      }
+    }
+  },
+  "entity": {
+    "fan": {
+      "ventilation_speed": {
+        "name": "Ventilation speed",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "off": "Off",
+              "low": "Low",
+              "medium": "Medium",
+              "high": "High",
+              "low_override": "Low (temporary override)",
+              "medium_override": "Medium (temporary override)",
+              "high_override": "High (temporary override)",
+              "away": "Away",
+              "boost": "Boost",
+              "auto": "Auto"
+            }
+          }
+        }
+      }
+    }
+  }
+}
