@@ -21,6 +21,16 @@
         }
       }
     },
+    "select": {
+      "bypass_mode": {
+        "default": "mdi:valve",
+        "state": {
+          "open": "mdi:valve-open",
+          "close": "mdi:valve-closed",
+          "error": "mdi:alert-circle"
+        }
+      }
+    },
     "sensor": {
       "error_code": {
         "default": "mdi:alert-circle",
