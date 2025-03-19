@@ -201,6 +201,11 @@
         "name": "Defrost"
       }
     },
+    "button": {
+      "filter_reset": {
+        "name": "Reset filter counter"
+      }
+    },
     "sensor": {
       "rf_load_last_hour": {
         "name": "RF load last hour"
