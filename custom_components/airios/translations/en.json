@@ -272,6 +272,20 @@
       "override_remaining_time": {
         "name": "Temporary override remaining time"
       }
+    },
+    "number": {
+      "preheater_setpoint": {
+        "name": "Preheater setpoint"
+      },
+      "free_ventilation_setpoint": {
+        "name": "Free ventilation setpoint"
+      },
+      "free_ventilation_cooling_offset": {
+        "name": "Free ventilation cooling offset"
+      },
+      "frost_protection_preheater_setpoint": {
+        "name": "Frost protection preheater setpoint"
+      }
     }
   }
 }

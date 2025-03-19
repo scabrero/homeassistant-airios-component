@@ -93,6 +93,20 @@
       "rf_load_current_hour": {
         "default": "mdi:radio-tower"
       }
+    },
+    "number": {
+      "preset_setpoint": {
+        "default": "mdi:thermostat"
+      },
+      "free_ventilation_setpoint": {
+        "default": "mdi:weather-windy"
+      },
+      "free_ventilation_cooling_offset": {
+        "default": "mdi:weather-windy"
+      },
+      "frost_protection_preheater_setpoint": {
+        "default": "mdi:thermostat"
+      }
     }
   }
 }
