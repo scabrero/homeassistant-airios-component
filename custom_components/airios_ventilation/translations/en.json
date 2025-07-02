@@ -130,6 +130,19 @@
       }
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Airios integration options",
+        "data": {
+          "scan_interval": "Scan interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "Poll interval in seconds"
+        }
+      }
+    }
+  },
   "entity": {
     "fan": {
       "ventilation_speed": {

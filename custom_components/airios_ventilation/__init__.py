@@ -11,6 +11,7 @@ from homeassistant.const import (
     CONF_DEVICE,
     CONF_HOST,
     CONF_PORT,
+    CONF_SCAN_INTERVAL,
     CONF_TYPE,
     Platform,
 )
@@ -50,7 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     modbus_address = entry.data[CONF_ADDRESS]
     api = Airios(transport, modbus_address)
 
-    update_interval = DEFAULT_SCAN_INTERVAL
+    update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
     await coordinator.async_config_entry_first_refresh()
 
