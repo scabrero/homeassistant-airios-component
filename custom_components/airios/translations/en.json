@@ -189,6 +189,78 @@
       "defrost": {
         "name": "Defrost"
       }
+    },
+    "sensor": {
+      "rf_load_last_hour": {
+        "name": "RF load last hour"
+      },
+      "rf_load_current_hour": {
+        "name": "RF load"
+      },
+      "rf_sent_messages_last_hour": {
+        "name": "RF messages last hour"
+      },
+      "rf_sent_messages_current_hour": {
+        "name": "RF messages"
+      },
+      "power_on_time": {
+        "name": "Uptime"
+      },
+      "indoor_air_temperature": {
+        "name": "Indoor temperature"
+      },
+      "outdoor_air_temperature": {
+        "name": "Outdoor temperature"
+      },
+      "exhaust_air_temperature": {
+        "name": "Exhaust temperature"
+      },
+      "supply_air_temperature": {
+        "name": "Supply temperature"
+      },
+      "exhaust_fan_rpm": {
+        "name": "Exhaust fan speed"
+      },
+      "supply_fan_rpm": {
+        "name": "Supply fan speed"
+      },
+      "supply_fan_speed": {
+        "name": "Supply fan speed"
+      },
+      "exhaust_fan_speed": {
+        "name": "Exhaust fan speed"
+      },
+      "error_code": {
+        "name": "Error code",
+        "state": {
+          "no_error": "No error",
+          "non_specific_fault": "Non specific fault",
+          "emergency_stop": "Emergency stop",
+          "fan_1_error": "Fan 1 error",
+          "fan_2_error": "Fan 2 error",
+          "x20_sensor_error": "X20 sensor error",
+          "x21_sensor_error": "X21 sensor error",
+          "x22_sensor_error": "X22 sensor error",
+          "x23_sensor_error": "X23 sensor error",
+          "binding_mode_active": "Binding mode active",
+          "identification_active": "Identification active"
+        }
+      },
+      "filter_duration_days": {
+        "name": "Filter duration"
+      },
+      "filter_remaining_percent": {
+        "name": "Filter remaining"
+      },
+      "bypass_position": {
+        "name": "Bypass position"
+      },
+      "postheater": {
+        "name": "Postheater"
+      },
+      "override_remaining_time": {
+        "name": "Temporary override remaining time"
+      }
     }
   }
 }
