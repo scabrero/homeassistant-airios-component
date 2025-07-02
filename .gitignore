@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific
+config/.HA_VERSION
+config/.storage/
+config/blueprints/
+config/home-assistant.log*
+config/home-assistant_v2.db*
