@@ -121,6 +121,9 @@
     },
     "set_preset_fan_speed_high": {
       "service": "mdi:fan-speed-3"
+    },
+    "set_preset_mode_duration": {
+      "service": "mdi:fan-clock"
     }
   }
 }

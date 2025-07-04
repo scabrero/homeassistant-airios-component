@@ -294,6 +294,20 @@
     }
   },
   "services": {
+    "set_preset_mode_duration": {
+      "name": "Set a preset for a fixed duration",
+      "description": "Set a preset for a fixed duration. The unit will switch back to the previous preset.",
+      "fields": {
+        "preset_mode": {
+          "name": "Preset name",
+          "description": "The preset name"
+        },
+        "preset_override_time": {
+          "name": "Duration",
+          "description": "The preset override time"
+        }
+      }
+    },
     "set_preset_fan_speed_away": {
       "name": "Set away preset fans speeds",
       "description": "Sets the supply and exhaust fans speeds of the Away preset.",
