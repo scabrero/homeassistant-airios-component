@@ -125,6 +125,9 @@
     "set_preset_mode_duration": {
       "service": "mdi:fan-clock"
     },
+    "filter_reset": {
+      "service": "mdi:air-filter"
+    },
     "device_reset": {
       "service": "mdi:restart"
     },

@@ -14,6 +14,11 @@ device_reset:
     entity:
       integration: airios
       device_class: duration
+filter_reset:
+  target:
+    entity:
+      integration: airios
+      domain: fan
 set_preset_fan_speed_away:
   target:
     entity:

@@ -364,6 +364,10 @@
         }
       }
     },
+    "filter_reset": {
+      "name": "Reset filter counter",
+      "description": "Resets the filter counter after repacing or cleaning the filters."
+    },
     "device_reset": {
       "name": "Reset the device",
       "description": "Resets the device preserving the configuration."
