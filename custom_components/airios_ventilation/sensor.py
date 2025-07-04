@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast, final
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -22,9 +22,12 @@ from homeassistant.const import (
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
+from homeassistant.helpers import entity_platform
+from homeassistant.helpers.typing import StateType
 from pyairios.constants import (
     ProductId,
+    ResetMode,
     VMDBypassPosition,
     VMDErrorCode,
     VMDHeater,
@@ -32,8 +35,11 @@ from pyairios.constants import (
     VMDSensorStatus,
     VMDTemperature,
 )
+from pyairios.exceptions import AiriosException
 
+from .coordinator import AiriosDataUpdateCoordinator
 from .entity import AiriosEntity
+from .services import SERVICE_DEVICE_RESET, SERVICE_FACTORY_RESET
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
@@ -42,6 +48,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
+    from pyairios import BRDG02R13
     from pyairios.data_model import AiriosNodeData
 
     from .coordinator import AiriosDataUpdateCoordinator
@@ -322,6 +329,34 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         finally:
             self.async_write_ha_state()
 
+    @final
+    async def async_device_reset(self) -> bool:
+        """Reset the bridge."""
+        node = cast("BRDG02R13", await self.api().node(self.modbus_address))
+        _LOGGER.info("Reset node %s", str(node))
+        try:
+            if not await node.reset(ResetMode.SOFT_RESET):
+                msg = "Failed to reset device"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to reset device: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True
+
+    @final
+    async def async_factory_reset(self) -> bool:
+        """Reset the bridge."""
+        node = cast("BRDG02R13", await self.api().node(self.modbus_address))
+        _LOGGER.info("Factory reset node %s", str(node))
+        try:
+            if not await node.reset(ResetMode.FACTORY_RESET):
+                msg = "Failed to factory reset device"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to factory reset device: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True
+
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
@@ -367,3 +402,15 @@ async def async_setup_entry(
                 ]
             )
         async_add_entities(entities, config_subentry_id=subentry_id)
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_DEVICE_RESET,
+        None,
+        "async_device_reset",
+    )
+    platform.async_register_entity_service(
+        SERVICE_FACTORY_RESET,
+        None,
+        "async_factory_reset",
+    )

@@ -363,6 +363,14 @@
           "description": "Exhaust fan speed"
         }
       }
+    },
+    "device_reset": {
+      "name": "Reset the device",
+      "description": "Resets the device preserving the configuration."
+    },
+    "factory_reset": {
+      "name": "Factory reset the device",
+      "description": "Resets the device to factory state."
     }
   }
 }
