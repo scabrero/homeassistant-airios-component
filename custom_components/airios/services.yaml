@@ -1,3 +1,19 @@
+factory_reset:
+  target:
+    device:
+      integration: airios
+      model: BRDG-02R13
+    entity:
+      integration: airios
+      device_class: duration
+device_reset:
+  target:
+    device:
+      integration: airios
+      model: BRDG-02R13
+    entity:
+      integration: airios
+      device_class: duration
 set_preset_fan_speed_away:
   target:
     entity:

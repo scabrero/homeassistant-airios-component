@@ -36,6 +36,7 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
 ]
 
+
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
 
 

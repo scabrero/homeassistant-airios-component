@@ -124,6 +124,12 @@
     },
     "set_preset_mode_duration": {
       "service": "mdi:fan-clock"
+    },
+    "device_reset": {
+      "service": "mdi:restart"
+    },
+    "factory_reset": {
+      "service": "mdi:alert"
     }
   }
 }
