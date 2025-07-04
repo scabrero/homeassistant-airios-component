@@ -292,5 +292,63 @@
         "name": "Frost protection preheater setpoint"
       }
     }
+  },
+  "services": {
+    "set_preset_fan_speed_away": {
+      "name": "Set away preset fans speeds",
+      "description": "Sets the supply and exhaust fans speeds of the Away preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Supply",
+          "description": "Supply fan speed"
+        },
+        "exhaust_fan_speed": {
+          "name": "Exhaust",
+          "description": "Exhaust fan speed"
+        }
+      }
+    },
+    "set_preset_fan_speed_low": {
+      "name": "Set low preset fans speeds",
+      "description": "Sets the supply and exhaust fans speeds of the Low preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Supply",
+          "description": "Supply fan speed"
+        },
+        "exhaust_fan_speed": {
+          "name": "Exhaust",
+          "description": "Exhaust fan speed"
+        }
+      }
+    },
+    "set_preset_fan_speed_medium": {
+      "name": "Set medium preset fans speeds",
+      "description": "Sets the supply and exhaust fans speeds of the Medium preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Supply",
+          "description": "Supply fan speed"
+        },
+        "exhaust_fan_speed": {
+          "name": "Exhaust",
+          "description": "Exhaust fan speed"
+        }
+      }
+    },
+    "set_preset_fan_speed_high": {
+      "name": "Set high preset fans speeds",
+      "description": "Sets the supply and exhaust fans speeds of the High preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Supply",
+          "description": "Supply fan speed"
+        },
+        "exhaust_fan_speed": {
+          "name": "Exhaust",
+          "description": "Exhaust fan speed"
+        }
+      }
+    }
   }
 }
