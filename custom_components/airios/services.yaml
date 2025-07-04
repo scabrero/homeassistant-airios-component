@@ -86,3 +86,25 @@ set_preset_fan_speed_high:
           min: 0
           max: 100
           unit_of_measurement: "%"
+set_preset_mode_duration:
+  target:
+    entity:
+      integration: airios
+      domain: fan
+  fields:
+    preset_mode:
+      required: true
+      selector:
+        select:
+          options:
+            - "low"
+            - "medium"
+            - "high"
+    preset_override_time:
+      required: true
+      default: 30
+      selector:
+        number:
+          min: 10
+          max: 1080
+          unit_of_measurement: minutes
