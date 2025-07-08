@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import typing
-from typing import Any, cast
+from typing import Any, cast, final
 
 from homeassistant.components.fan import (
     FanEntity,
@@ -14,6 +14,7 @@ from homeassistant.components.fan import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
+from homeassistant.helpers import entity_platform
 from pyairios import VMD02RPS78, AiriosException, ProductId
 from pyairios.constants import (
     VMDCapabilities,
@@ -22,6 +23,13 @@ from pyairios.constants import (
 )
 
 from .entity import AiriosEntity
+from .services import (
+    SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
+    SERVICE_SET_PRESET_FAN_SPEED_AWAY,
+    SERVICE_SET_PRESET_FAN_SPEED_HIGH,
+    SERVICE_SET_PRESET_FAN_SPEED_LOW,
+    SERVICE_SET_PRESET_FAN_SPEED_MEDIUM,
+)
 
 if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
@@ -116,6 +124,28 @@ async def async_setup_entry(
         except AiriosException as ex:
             _LOGGER.warning("Failed to setup platform: %s", ex)
             raise PlatformNotReady from ex
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_PRESET_FAN_SPEED_AWAY,
+        SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
+        "async_set_preset_fan_speed_away",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_PRESET_FAN_SPEED_LOW,
+        SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
+        "async_set_preset_fan_speed_low",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_PRESET_FAN_SPEED_MEDIUM,
+        SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
+        "async_set_preset_fan_speed_low",
+    )
+    platform.async_register_entity_service(
+        SERVICE_SET_PRESET_FAN_SPEED_HIGH,
+        SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
+        "async_set_preset_fan_speed_low",
+    )
 
 
 class AiriosFanEntity(AiriosEntity, FanEntity):
@@ -281,3 +311,103 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
                 )
                 self._unavailable_logged = True
             self.async_write_ha_state()
+
+    @final
+    async def async_set_preset_fan_speed_away(
+        self,
+        supply_fan_speed: int,
+        exhaust_fan_speed: int,
+    ) -> bool:
+        """Set the fans speeds for the away preset mode."""
+        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        msg = (
+            "Setting fans speeds for away preset on node "
+            f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
+        )
+        _LOGGER.info(msg)
+        try:
+            if not await node.set_preset_standby_fan_speed_supply(supply_fan_speed):
+                msg = f"Failed to set supply fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+            if not await node.set_preset_standby_fan_speed_exhaust(exhaust_fan_speed):
+                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to set fan speeds: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True
+
+    @final
+    async def async_set_preset_fan_speed_low(
+        self,
+        supply_fan_speed: int,
+        exhaust_fan_speed: int,
+    ) -> bool:
+        """Set the fans speeds for the low preset mode."""
+        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        msg = (
+            "Setting fans speeds for low preset on node "
+            f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+        )
+        _LOGGER.info(msg)
+        try:
+            if not await node.set_preset_low_fan_speed_supply(supply_fan_speed):
+                msg = f"Failed to set supply fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+            if not await node.set_preset_low_fan_speed_exhaust(exhaust_fan_speed):
+                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to set fan speeds: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True
+
+    @final
+    async def async_set_preset_fan_speed_medium(
+        self,
+        supply_fan_speed: int,
+        exhaust_fan_speed: int,
+    ) -> bool:
+        """Set the fans speeds for the medium preset mode."""
+        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        msg = (
+            "Setting fans speeds for medium preset on node "
+            f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+        )
+        _LOGGER.info(msg)
+        try:
+            if not await node.set_preset_medium_fan_speed_supply(supply_fan_speed):
+                msg = f"Failed to set supply fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+            if not await node.set_preset_medium_fan_speed_exhaust(exhaust_fan_speed):
+                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to set fan speeds: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True
+
+    @final
+    async def async_set_preset_fan_speed_high(
+        self,
+        supply_fan_speed: int,
+        exhaust_fan_speed: int,
+    ) -> bool:
+        """Set the fans speeds for the high preset mode."""
+        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        msg = (
+            "Setting fans speeds for high preset on node "
+            f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+        )
+        _LOGGER.info(msg)
+        try:
+            if not await node.set_preset_high_fan_speed_supply(supply_fan_speed):
+                msg = f"Failed to set supply fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+            if not await node.set_preset_high_fan_speed_exhaust(exhaust_fan_speed):
+                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                raise HomeAssistantError(msg)
+        except AiriosException as ex:
+            msg = f"Failed to set fan speeds: {ex}"
+            raise HomeAssistantError(msg) from ex
+        return True

@@ -1,0 +1,88 @@
+set_preset_fan_speed_away:
+  target:
+    entity:
+      integration: airios_ventilation
+      domain: fan
+  fields:
+    supply_fan_speed:
+      required: true
+      default: 13
+      selector:
+        number:
+          min: 0
+          max: 40
+          unit_of_measurement: "%"
+    exhaust_fan_speed:
+      required: true
+      default: 7
+      selector:
+        number:
+          min: 0
+          max: 40
+          unit_of_measurement: "%"
+set_preset_fan_speed_low:
+  target:
+    entity:
+      integration: airios_ventilation
+      domain: fan
+  fields:
+    supply_fan_speed:
+      required: true
+      default: 27
+      selector:
+        number:
+          min: 0
+          max: 80
+          unit_of_measurement: "%"
+    exhaust_fan_speed:
+      required: true
+      default: 13
+      selector:
+        number:
+          min: 0
+          max: 80
+          unit_of_measurement: "%"
+set_preset_fan_speed_medium:
+  target:
+    entity:
+      integration: airios_ventilation
+      domain: fan
+  fields:
+    supply_fan_speed:
+      required: true
+      default: 32
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    exhaust_fan_speed:
+      required: true
+      default: 26
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+set_preset_fan_speed_high:
+  target:
+    entity:
+      integration: airios_ventilation
+      domain: fan
+  fields:
+    supply_fan_speed:
+      required: true
+      default: 54
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    exhaust_fan_speed:
+      required: true
+      default: 46
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
