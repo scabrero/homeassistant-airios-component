@@ -59,7 +59,7 @@ Please check the [bridge documentation page](doc/1-brdg02r13.md) for more inform
 ### Manual
 
 1. Download [the latest release](https://github.com/scabrero/homeassistant-airios-component/releases)
-2. Extract the `custom_components` folder to your Home Assistant's config folder, the resulting folder structure should be `config/custom_components/airios`
+2. Extract the `custom_components` folder to your Home Assistant's config folder, the resulting folder structure should be `config/custom_components/airios_ventilation`
 3. Restart Home Assistant
 4. [Add Airios integration](https://my.home-assistant.io/redirect/config_flow_start/?domain=airios_ventilation), or go to Settings > Integrations and add Airios
 
