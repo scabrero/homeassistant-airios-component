@@ -32,6 +32,7 @@ CONF_DEFAULT_NETWORK_MODBUS_ADDRESS = 207
 SUPPORTED_UNITS: dict[str, ProductId] = {
     "Siber DF Optima 2": ProductId.VMD_02RPS78,
     "Siber DF EVO": ProductId.VMD_02RPS78,
+    "ClimaRad Ventura V1": ProductId.VMD_07RPS13,
 }
 
 SUPPORTED_ACCESSORIES: dict[str, ProductId] = {
