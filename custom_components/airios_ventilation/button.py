@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
     from pyairios.node import AiriosNode
-    from pyairios.vmd_02rps78 import VMD02RPS78
+    from pyairios.models.vmd_02rps78 import VmdNode  # TODO import VMD02RPS78 as dict modules[] from bridge
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -37,7 +37,8 @@ PARALLEL_UPDATES = 0
 
 
 async def _filter_reset(node: AiriosNode) -> bool:
-    vmd = cast("VMD02RPS78", node)
+    vmd = cast(VmdNode, node)
+    # TODO pass in the coordinator to select model from id?
     return await vmd.filter_reset()
 
 

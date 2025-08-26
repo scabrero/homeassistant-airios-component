@@ -2,4 +2,5 @@ colorlog==6.9.0
 homeassistant==2025.6.1
 pip>=21.3.1
 ruff==0.12.2
-pyairios==1.0.6
+#pyairios==1.0.6
+pyairios @ git+https://github.com/silverailscolo/pyairios@eb-ventura

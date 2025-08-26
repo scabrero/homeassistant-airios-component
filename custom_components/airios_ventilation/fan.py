@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import typing
+from types import ModuleType
 from typing import Any, cast, final
 
 from homeassistant.components.fan import (
@@ -15,7 +16,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
 from homeassistant.helpers import entity_platform
-from pyairios import VMD02RPS78, AiriosException, ProductId
+from pyairios import AiriosException  # TODO import VMD02RPS78.VmdNode as dict modules[] from bridge
 from pyairios.constants import (
     VMDCapabilities,
     VMDRequestedVentilationSpeed,
@@ -104,25 +105,44 @@ async def async_setup_entry(
 
         entities: list[FanEntity] = []
 
-        result = node["product_id"]
-        if result is None or result.value is None:
+        _id = node["product_id"]
+        if _id is None or _id.value is None:
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
-        product_id = result.value
+        product_id = _id.value
 
         try:
-            if product_id == ProductId.VMD_02RPS78:
-                vmd = cast("VMD02RPS78", await coordinator.api.node(modbus_address))
-                result = await vmd.capabilities()
-                capabilities = result.value
-                entities.extend(
-                    [
-                        AiriosFanEntity(
-                            description, coordinator, node, capabilities, via, subentry
+            # lookup node model family by key # compare to pyairios/cli.py
+            models = coordinator.api.get_models()  # dict of available modules by model_key (names)
+            for key, val in coordinator.api.get_product_ids():  # dict of ids by model_key (names)
+                if product_id == val:
+                    if key == "VMD02RPS78":
+                        vmd = cast(models[key].VmdNode, await coordinator.api.node(modbus_address))
+                        result = await vmd.capabilities()  # not all fans support capabilities register call
+                        capabilities = result.value
+                        entities.extend(
+                            [
+                                AiriosFanEntity(
+                                    description, coordinator, node, capabilities, via, subentry
+                                )
+                                for description in VMD_FAN_ENTITIES
+                            ]
                         )
-                        for description in VMD_FAN_ENTITIES
-                    ]
-                )
+                    elif key == "VMD07RPS13":
+                        vmd = cast(models[key].VmdNode, await coordinator.api.node(modbus_address))
+                        result = await vmd.capabilities()  # does not support capabilities, returns None
+                        if result is None:
+                            capabilities = ""  # TODO create some other set of capabilities: mode, bypass, ...
+                        else:
+                            capabilities = result.value
+                        entities.extend(
+                            [
+                                AiriosFanEntity(
+                                    description, coordinator, node, capabilities, via, subentry
+                                )
+                                for description in VMD_FAN_ENTITIES
+                            ]
+                        )
             async_add_entities(entities, config_subentry_id=subentry_id)
         except AiriosException as ex:
             _LOGGER.warning("Failed to setup platform: %s", ex)
@@ -166,6 +186,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
 
     _attr_name = None
     _attr_supported_features = FanEntityFeature.PRESET_MODE
+    _node_class: ModuleType
 
     def __init__(  # noqa: PLR0913
         self,
@@ -179,12 +200,13 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
+        _node_class = coordinator.api.get_models()["product_name"].VmdNode
 
         _LOGGER.info(
             "Fan for node %s@%s capable of %s",
             node["product_name"],
             node["slave_id"],
-            capabilities,
+            capabilities,  # not all airios fans support a capabilities register
         )
 
         self._attr_preset_modes = [
@@ -238,7 +260,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             return False
 
         try:
-            node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+            node = cast(self._node_class, await self.api().node(self.modbus_address))
             vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
 
             # Handle temporary overrides
@@ -332,7 +354,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the away preset mode."""
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for away preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
@@ -357,7 +379,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the low preset mode."""
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for low preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -382,7 +404,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the medium preset mode."""
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for medium preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -407,7 +429,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the high preset mode."""
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for high preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -440,7 +462,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             msg = f"Temporary override not available for preset [{preset_mode}]"
             raise HomeAssistantError(msg)
         vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         result = await node.capabilities()
         caps = result.value
         if VMDCapabilities.TIMER_CAPABLE not in caps:
@@ -466,7 +488,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
     @final
     async def async_filter_reset(self) -> bool:
         """Reset the filter dirty flag."""
-        node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+        node = cast(self._node_class, await self.api().node(self.modbus_address))
         _LOGGER.info("Reset filter dirty flag for node %s", str(node))
         try:
             if not await node.filter_reset():

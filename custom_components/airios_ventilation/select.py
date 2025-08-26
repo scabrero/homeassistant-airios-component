@@ -11,7 +11,8 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios import VMD02RPS78, ProductId
+from pyairios.models.vmd_02rps78 import VmdNode  # TODO loop through all models
+from pyairios import ProductId  # TODO import as dict 'modules[]' from _init_
 from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
 
@@ -119,7 +120,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
             return False
 
         try:
-            node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
+            node = cast(VmdNode, await self.api().node(self.modbus_address))  # TODO select by product_id
             bypass_mode = NAME_TO_BYPASS_MODE[option]
             ret = await node.set_bypass_mode(bypass_mode)
         except AiriosException as ex:
