@@ -140,7 +140,7 @@ async def async_setup_entry(
                                 AiriosFanEntity(
                                     description, coordinator, node, capabilities, via, subentry
                                 )
-                                for description in VMD_FAN_ENTITIES
+                                for description in VMD_FAN_ENTITIES  # uses ventilation_mode, not ventilation_speed
                             ]
                         )
             async_add_entities(entities, config_subentry_id=subentry_id)
@@ -200,7 +200,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        _node_class = coordinator.api.get_models()["product_name"].VmdNode
+        self._node_class = coordinator.api.get_models()["product_name"].VmdNode
 
         _LOGGER.info(
             "Fan for node %s@%s capable of %s",

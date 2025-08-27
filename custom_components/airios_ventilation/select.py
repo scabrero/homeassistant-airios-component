@@ -11,7 +11,7 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios.models.vmd_02rps78 import VmdNode  # TODO loop through all models
+# from pyairios.models.vmd_02rps78 import VmdNode  # TODO cleanup
 from pyairios import ProductId  # TODO import as dict 'modules[]' from _init_
 from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
@@ -54,7 +54,7 @@ def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
 
 
 VMD_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
-    AiriosSelectEntityDescription(
+    AiriosSelectEntityDescription(  # only for vmd_02rps78
         key="bypass_mode",
         translation_key="bypass_mode",
         options=["close", "open", "auto"],
@@ -91,6 +91,7 @@ async def async_setup_entry(
             entities.extend(
                 [
                     AiriosSelectEntity(description, coordinator, node, via, subentry)
+                    # TODO first check if model supports this: if select coordinator.api().etc...
                     for description in VMD_SELECT_ENTITIES
                 ]
             )
@@ -120,7 +121,9 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
             return False
 
         try:
-            node = cast(VmdNode, await self.api().node(self.modbus_address))  # TODO select by product_id
+            # only for VMD (controllers), not REM
+            node_class = self.api().get_models()[self.product_name].VmdNode
+            node = cast(node_class, await self.api().node(self.modbus_address))
             bypass_mode = NAME_TO_BYPASS_MODE[option]
             ret = await node.set_bypass_mode(bypass_mode)
         except AiriosException as ex:

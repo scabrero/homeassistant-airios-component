@@ -198,6 +198,7 @@ async def async_setup_entry(
                         subentry,
                     )
                     for description in VMD_BINARY_SENSOR_ENTITIES
+                    # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
                 ]
             )
         if result.value == ProductId.VMN_05LM02:

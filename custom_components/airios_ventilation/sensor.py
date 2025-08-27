@@ -392,6 +392,8 @@ async def async_setup_entry(
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
+        # else:
+        # TODO loop through all self.api().get_models()
         elif result.value == ProductId.VMD_02RPS78:
             entities.extend(
                 [
@@ -401,6 +403,7 @@ async def async_setup_entry(
                     for description in VMD_SENSOR_ENTITIES
                 ]
             )
+
         async_add_entities(entities, config_subentry_id=subentry_id)
 
     platform = entity_platform.async_get_current_platform()

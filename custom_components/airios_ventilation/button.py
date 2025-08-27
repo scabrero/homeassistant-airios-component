@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
     from pyairios.node import AiriosNode
-    from pyairios.models.vmd_02rps78 import VmdNode  # TODO import VMD02RPS78 as dict modules[] from bridge
+    from pyairios.models.vmd_02rps78 import VmdNode  # TODO import VMD02RPS78 as dict modules[] from .api (bridge)
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -115,6 +115,8 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
         """Handle button press."""
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
+            # TODO check if node (model) supports press_fn (filter_reset)
+            # self.api().get_models().get(self.product_name)
             node = await self.api().node(self.modbus_address)
             await self.entity_description.press_fn(node)
         except AiriosException as ex:

@@ -148,6 +148,7 @@ async def async_setup_entry(
         product_id = result.value
 
         try:
+            # for k, v in api.get_product_ids():
             if product_id == ProductId.VMD_02RPS78:
                 entities.extend(
                     [
@@ -168,6 +169,8 @@ async def async_setup_entry(
                             for description in VMD_PREHEATER_NUMBER_ENTITIES
                         ]
                     )
+            # else:
+            #     TODO loop through all models
             async_add_entities(entities, config_subentry_id=subentry_id)
         except AiriosException as ex:
             _LOGGER.warning("Failed to setup platform: %s", ex)
