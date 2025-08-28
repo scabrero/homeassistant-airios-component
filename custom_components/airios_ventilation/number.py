@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
+from types import ModuleType
 from typing import cast
 
 from homeassistant.components.number import (
@@ -16,7 +17,7 @@ from homeassistant.components.number import (
 from homeassistant.const import CONF_ADDRESS, EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import PlatformNotReady
-from pyairios import AiriosException, ProductId
+from pyairios import AiriosException
 from pyairios.constants import VMDCapabilities
 
 from .entity import AiriosEntity
@@ -27,33 +28,31 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
-    from pyairios.models.vmd_02rps78 import VmdNode  # TODO import VMD02RPS78 as dict modules[] from bridge
 
     from .coordinator import AiriosDataUpdateCoordinator
-    # _node_class = coordinator.api.get_models()["product_name"].VmdNode  # if for correct model
 
 _LOGGER = logging.getLogger(__name__)
 
 PARALLEL_UPDATES = 0
 
 
-async def set_preheater_setpoint(vmd: VmdNode, value: float) -> bool:
+async def set_preheater_setpoint(vmd: ModuleType, value: float) -> bool:
     """Set the preheater setpoint."""
     return await vmd.set_preheater_setpoint(value)
 
 
-async def set_free_ventilation_setpoint(vmd: VmdNode, value: float) -> bool:
+async def set_free_ventilation_setpoint(vmd: ModuleType, value: float) -> bool:
     """Set the preheater setpoint."""
     return await vmd.set_free_ventilation_setpoint(value)
 
 
-async def set_free_ventilation_cooling_offset(vmd: VmdNode, value: float) -> bool:
+async def set_free_ventilation_cooling_offset(vmd: ModuleType, value: float) -> bool:
     """Set the preheater setpoint."""
     return await vmd.set_free_ventilation_cooling_offset(value)
 
 
 async def set_frost_protection_preheater_setpoint(
-    vmd: VmdNode, value: float
+    vmd: ModuleType, value: float
 ) -> bool:
     """Set the preheater setpoint."""
     return await vmd.set_frost_protection_preheater_setpoint(value)
@@ -63,7 +62,7 @@ async def set_frost_protection_preheater_setpoint(
 class AiriosNumberEntityDescription(NumberEntityDescription):
     """Description of a Airios number entity."""
 
-    set_value_fn: Callable[[VmdNode, float], Awaitable[bool]]
+    set_value_fn: Callable[[ModuleType, float], Awaitable[bool]]
 
 
 VMD_PREHEATER_NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
@@ -146,31 +145,32 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
         product_id = result.value
-
+        models = coordinator.api.models()
         try:
-            # for k, v in api.get_product_ids():
-            if product_id == ProductId.VMD_02RPS78:
-                entities.extend(
-                    [
-                        AiriosNumberEntity(
-                            description, coordinator, node_info, via, subentry
-                        )
-                        for description in VMD_FREEVENT_NUMBER_ENTITIES
-                    ]
-                )
-                node = cast("VmdNode", await api.node(modbus_address))
-                capabilities = await node.capabilities()
-                if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities.value:
+            for key, _id in coordinator.api.product_ids():
+                # dict of ids by model_key (names). Can we use node["product_name"] as key?
+                if product_id == _id and key.startswith("VMD"):
+                    # only controllers, add is_controller() to model.py?
                     entities.extend(
                         [
                             AiriosNumberEntity(
                                 description, coordinator, node_info, via, subentry
                             )
-                            for description in VMD_PREHEATER_NUMBER_ENTITIES
+                            for description in VMD_FREEVENT_NUMBER_ENTITIES
                         ]
                     )
-            # else:
-            #     TODO loop through all models
+
+                    vmd = cast(models[key].VmdNode, await api.node(modbus_address))
+                    capabilities = await vmd.capabilities()
+                    if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities.value:
+                        entities.extend(
+                            [
+                                AiriosNumberEntity(
+                                    description, coordinator, node_info, via, subentry
+                                )
+                                for description in VMD_PREHEATER_NUMBER_ENTITIES
+                            ]
+                        )
             async_add_entities(entities, config_subentry_id=subentry_id)
         except AiriosException as ex:
             _LOGGER.warning("Failed to setup platform: %s", ex)
@@ -198,8 +198,13 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
     async def _set_value_internal(self, value: float) -> bool:
         if self.entity_description.set_value_fn is None:
             raise NotImplementedError
-        node = cast("VmdNode", await self.api().node(self.modbus_address))
-        return await self.entity_description.set_value_fn(node, value)
+        node = await self.api().node(self.modbus_address)
+        models = self.coordinator.api().models()
+        for key, v in models:
+            if v == node.node_product_id():
+                vmd = cast(models[key].VmdNode, node)
+                return await self.entity_description.set_value_fn(vmd, value)
+        return False
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""

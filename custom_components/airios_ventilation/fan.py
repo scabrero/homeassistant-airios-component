@@ -16,7 +16,7 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
 from homeassistant.helpers import entity_platform
-from pyairios import AiriosException  # TODO import VMD02RPS78.VmdNode as dict modules[] from bridge
+from pyairios import AiriosException
 from pyairios.constants import (
     VMDCapabilities,
     VMDRequestedVentilationSpeed,
@@ -113,36 +113,32 @@ async def async_setup_entry(
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = coordinator.api.get_models()  # dict of available modules by model_key (names)
-            for key, val in coordinator.api.get_product_ids():  # dict of ids by model_key (names)
-                if product_id == val:
-                    if key == "VMD02RPS78":
-                        vmd = cast(models[key].VmdNode, await coordinator.api.node(modbus_address))
-                        result = await vmd.capabilities()  # not all fans support capabilities register call
-                        capabilities = result.value
-                        entities.extend(
-                            [
-                                AiriosFanEntity(
-                                    description, coordinator, node, capabilities, via, subentry
-                                )
-                                for description in VMD_FAN_ENTITIES
-                            ]
-                        )
-                    elif key == "VMD07RPS13":
-                        vmd = cast(models[key].VmdNode, await coordinator.api.node(modbus_address))
-                        result = await vmd.capabilities()  # does not support capabilities, returns None
-                        if result is None:
-                            capabilities = ""  # TODO create some other set of capabilities: mode, bypass, ...
-                        else:
-                            capabilities = result.value
-                        entities.extend(
-                            [
-                                AiriosFanEntity(
-                                    description, coordinator, node, capabilities, via, subentry
-                                )
-                                for description in VMD_FAN_ENTITIES  # uses ventilation_mode, not ventilation_speed
-                            ]
-                        )
+            models = (
+                coordinator.api.models()
+            )  # dict of available modules by model_key (names)
+            for key, _id in coordinator.api.product_ids():
+                # dict of ids by model_key (names). Can we use node["product_name"] as key?
+                if product_id == _id and key.startswith("VMD"):
+                    # only controllers, add is_controller() to model.py?
+                    vmd = cast(
+                        models[key].VmdNode,
+                        await coordinator.api.node(modbus_address),
+                    )
+                    result = await vmd.capabilities()
+                    capabilities = result.value
+                    entities.extend(
+                        [
+                            AiriosFanEntity(
+                                description,
+                                coordinator,
+                                node,
+                                capabilities,
+                                via,
+                                subentry,
+                            )
+                            for description in VMD_FAN_ENTITIES
+                        ]
+                    )
             async_add_entities(entities, config_subentry_id=subentry_id)
         except AiriosException as ex:
             _LOGGER.warning("Failed to setup platform: %s", ex)
@@ -200,7 +196,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        self._node_class = coordinator.api.get_models()["product_name"].VmdNode
+        self._node_class = coordinator.api.models()[node["product_name"]].VmdNode
 
         _LOGGER.info(
             "Fan for node %s@%s capable of %s",

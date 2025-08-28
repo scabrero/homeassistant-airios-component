@@ -33,7 +33,7 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from pyairios import Airios, AiriosException, AiriosRtuTransport, AiriosTcpTransport
-from pyairios.constants import BindingStatus
+from pyairios.constants import BindingStatus, ImportStatus
 from pyairios.exceptions import AiriosBindingException
 from pyairios.node import ProductId
 
@@ -308,6 +308,7 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
         return {
             "controller": ControllerSubentryFlowHandler,
             "accessory": AccessorySubentryFlowHandler,
+            "import": ImportSubentryFlowHandler,
         }
 
 
@@ -337,7 +338,7 @@ class OptionsFlowHandler(OptionsFlow):
 
 
 class ControllerSubentryFlowHandler(ConfigSubentryFlow):
-    """Handle subentry flow."""
+    """Handle subentry controller flow."""
 
     _bind_task: asyncio.Task | None = None
     _bind_result: BindingStatus | None = None
@@ -493,7 +494,7 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
 
 
 class AccessorySubentryFlowHandler(ConfigSubentryFlow):
-    """Handle subentry flow."""
+    """Handle subentry accessory flow."""
 
     _bind_task: asyncio.Task | None = None
     _bind_result: BindingStatus | None = None
@@ -659,6 +660,86 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             },
             title=self._name,
         )
+
+
+class ImportSubentryFlowHandler(ConfigSubentryFlow):
+    """Handle subentry import flow."""
+
+    _added_nodes: dict[int, str]
+    _import_result: ImportStatus | None = None
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """Import nodes already bound to bridge but not in HA"""
+
+        def _show_form(
+            continue_reply: dict[Any, Any], errors: dict[str, str]
+        ) -> SubentryFlowResult:
+            import_schema = vol.Schema(
+                {
+                    vol.Required("reply"): vol.In(continue_reply),
+                }
+            )
+            return self.async_show_form(
+                step_id="user", data_schema=import_schema, errors=errors
+            )
+
+        errors: dict[str, str] = {}
+        # config_entry = self._get_entry()
+        continue_reply = {0: "No", 1: "Yes"}
+        if user_input is not None:
+            if user_input["reply"] is 1:
+                try:
+                    pass
+                except ValueError:
+                    errors["base"] = "unexpected_product_id"
+                    return _show_form(continue_reply, errors)
+                return await self.async_step_do_import_nodes()
+        return _show_form(continue_reply, errors)
+
+    async def async_step_do_import_nodes(
+        self,
+    ) -> SubentryFlowResult:  # compare to def async_step_do_bind_controller
+        """Show the result of the import step."""
+        print("Yes, we Import!")
+        reason = "demo"
+        return self.async_abort(reason=reason)
+
+    # async def async_step_import_done(  # copied from AccessoryFlow set_bind_done
+    #         self,
+    #         user_input: dict[str, Any] | None = None,  # noqa: ARG002
+    #     ) -> SubentryFlowResult:
+    #     """Show the result of the import step."""
+    #     if self._bind_result is None:
+    #         msg = "Unexpected error, import result not defined"
+    #         raise AiriosBindingException(msg)
+    #     # if self._bind_result != BindingStatus.OUTGOING_BINDING_COMPLETED:
+    #     #     msg = f"Unexpected import result {self._bind_result}"
+    #     #     raise AiriosBindingException(msg)
+    #     if self._modbus_address is None:
+    #         msg = "Unexpected error, Modbus address not defined"
+    #         raise AiriosBindingException(msg)
+    #
+    #     config_entry = self._get_entry()
+    #     coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
+    #     api = coordinator.api
+    #     node = await api.node(self._modbus_address)
+    #     result = await node.node_rf_address()
+    #     if result is None or result.value is None:
+    #         msg = "Unexpected error reading node RF address"
+    #         raise AiriosBindingException(msg)
+    #     rf_address = result.value
+
+    # result = self.async_create_entry(
+    #     data={
+    #         CONF_NAME: self._name,
+    #         CONF_ADDRESS: self._modbus_address,
+    #         CONF_DEVICE: self._bind_product_id,
+    #         CONF_RF_ADDRESS: rf_address,
+    #     },
+    #     title=self._name,
+    # )
 
 
 class UnexpectedProductIdError(HomeAssistantError):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
+from types import ModuleType
 from typing import cast
 
 from homeassistant.components.button import (
@@ -15,7 +16,6 @@ from homeassistant.components.button import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from pyairios import AiriosException
-from pyairios.constants import ProductId
 
 from .entity import AiriosEntity
 
@@ -27,7 +27,6 @@ if typing.TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
     from pyairios.node import AiriosNode
-    from pyairios.models.vmd_02rps78 import VmdNode  # TODO import VMD02RPS78 as dict modules[] from .api (bridge)
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -36,17 +35,19 @@ _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 0
 
 
-async def _filter_reset(node: AiriosNode) -> bool:
-    vmd = cast(VmdNode, node)
-    # TODO pass in the coordinator to select model from id?
-    return await vmd.filter_reset()
+async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
+    for key, v in models:
+        if v == node.node_product_id():
+            vmd = cast(models[key].VmdNode, node)
+            return await vmd.filter_reset()
+    return False
 
 
 @dataclass(frozen=True, kw_only=True)
 class AiriosButtonEntityDescription(ButtonEntityDescription):
     """Airios binary sensor description."""
 
-    press_fn: Callable[[AiriosNode], Awaitable[bool]]
+    press_fn: Callable[[AiriosNode], dict[str, ModuleType], Awaitable[bool]]
 
 
 VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
@@ -84,13 +85,18 @@ async def async_setup_entry(
         if result is None or result.value is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
-        if result.value == ProductId.VMD_02RPS78:
-            entities.extend(
-                [
-                    AiriosButtonEntity(description, coordinator, node, via, subentry)
-                    for description in VMD_BUTTON_ENTITIES
-                ]
-            )
+        for key, _id in coordinator.api.product_ids():
+            # dict of ids by model_key (names). Can we use node["product_name"] as key?
+            if result.value == _id and key.startswith("VMD"):
+                # TODO check if it supports reset_filter
+                entities.extend(
+                    [
+                        AiriosButtonEntity(
+                            description, coordinator, node, via, subentry
+                        )
+                        for description in VMD_BUTTON_ENTITIES
+                    ]
+                )
         async_add_entities(entities, config_subentry_id=subentry_id)
 
 
@@ -115,9 +121,7 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
         """Handle button press."""
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
-            # TODO check if node (model) supports press_fn (filter_reset)
-            # self.api().get_models().get(self.product_name)
             node = await self.api().node(self.modbus_address)
-            await self.entity_description.press_fn(node)
+            await self.entity_description.press_fn(node, self.coordinator.models())
         except AiriosException as ex:
             raise HomeAssistantError from ex

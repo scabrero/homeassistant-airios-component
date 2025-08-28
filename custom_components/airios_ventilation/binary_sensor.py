@@ -15,7 +15,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from pyairios import ProductId
 
 from .entity import AiriosEntity
 
@@ -187,31 +186,35 @@ async def async_setup_entry(
         if result is None or result.value is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
-        if result.value == ProductId.VMD_02RPS78:
-            entities.extend(
-                [
-                    AiriosBinarySensorEntity(
-                        description,
-                        coordinator,
-                        node,
-                        via_config_entry,
-                        subentry,
+
+        for key, _id in coordinator.api.product_ids():
+            # dict of ids by model_key (names). Can we use node["product_name"] as key?
+            if result.value == _id:
+                if key.startswith("VMD"):  # only controllers, is_controller() ?
+                    entities.extend(
+                        [
+                            AiriosBinarySensorEntity(
+                                description,
+                                coordinator,
+                                node,
+                                via_config_entry,
+                                subentry,
+                            )
+                            for description in VMD_BINARY_SENSOR_ENTITIES
+                            # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
+                        ]
                     )
-                    for description in VMD_BINARY_SENSOR_ENTITIES
-                    # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
-                ]
-            )
-        if result.value == ProductId.VMN_05LM02:
-            entities.extend(
-                [
-                    AiriosBinarySensorEntity(
-                        description,
-                        coordinator,
-                        node,
-                        via_config_entry,
-                        subentry,
-                    )
-                    for description in VMN_BINARY_SENSOR_ENTITIES
-                ]
-            )
+            elif key.startswith("VMN"):
+                entities.extend(
+                    [
+                        AiriosBinarySensorEntity(
+                            description,
+                            coordinator,
+                            node,
+                            via_config_entry,
+                            subentry,
+                        )
+                        for description in VMN_BINARY_SENSOR_ENTITIES
+                    ]
+                )
         async_add_entities(entities, config_subentry_id=subentry_id)

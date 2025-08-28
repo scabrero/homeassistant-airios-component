@@ -11,8 +11,7 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-# from pyairios.models.vmd_02rps78 import VmdNode  # TODO cleanup
-from pyairios import ProductId  # TODO import as dict 'modules[]' from _init_
+
 from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
 
@@ -87,14 +86,20 @@ async def async_setup_entry(
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
 
-        if node["product_id"].value == ProductId.VMD_02RPS78:
-            entities.extend(
-                [
-                    AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    # TODO first check if model supports this: if select coordinator.api().etc...
-                    for description in VMD_SELECT_ENTITIES
-                ]
-            )
+        # only for VMD (controllers), not REM
+        for key, _id in coordinator.api.product_ids():
+            # dict of ids by model_key (names). Can we use node["product_name"] as key?
+            if node["product_id"].value == _id and key.startswith("VMD"):
+                # if node["product_id"].value == ProductId.VMD_02RPS78:
+                entities.extend(
+                    [
+                        AiriosSelectEntity(
+                            description, coordinator, node, via, subentry
+                        )
+                        # TODO first check if model supports this: if select coordinator.api().etc...
+                        for description in VMD_SELECT_ENTITIES
+                    ]
+                )
         async_add_entities(entities, config_subentry_id=subentry_id)
 
 
@@ -122,10 +127,10 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
 
         try:
             # only for VMD (controllers), not REM
-            node_class = self.api().get_models()[self.product_name].VmdNode
-            node = cast(node_class, await self.api().node(self.modbus_address))
+            node_class = self.api().models()[self.product_name].VmdNode
+            vmd = cast(node_class, await self.api().node(self.modbus_address))
             bypass_mode = NAME_TO_BYPASS_MODE[option]
-            ret = await node.set_bypass_mode(bypass_mode)
+            ret = await vmd.set_bypass_mode(bypass_mode)
         except AiriosException as ex:
             msg = f"Failed to set bypass mode {option}"
             raise HomeAssistantError(msg) from ex

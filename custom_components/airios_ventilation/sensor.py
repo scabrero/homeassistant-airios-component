@@ -37,7 +37,6 @@ from pyairios.constants import (
 )
 from pyairios.exceptions import AiriosException
 
-from .coordinator import AiriosDataUpdateCoordinator
 from .entity import AiriosEntity
 from .services import SERVICE_DEVICE_RESET, SERVICE_FACTORY_RESET
 
@@ -332,7 +331,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
     @final
     async def async_device_reset(self) -> bool:
         """Reset the bridge."""
-        node = cast("BRDG02R13", await self.api().node(self.modbus_address))
+        node = cast(BRDG02R13, await self.api().node(self.modbus_address))
         _LOGGER.info("Reset node %s", str(node))
         try:
             if not await node.reset(ResetMode.SOFT_RESET):
@@ -346,7 +345,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
     @final
     async def async_factory_reset(self) -> bool:
         """Reset the bridge."""
-        node = cast("BRDG02R13", await self.api().node(self.modbus_address))
+        node = cast(BRDG02R13, await self.api().node(self.modbus_address))
         _LOGGER.info("Factory reset node %s", str(node))
         try:
             if not await node.reset(ResetMode.FACTORY_RESET):
@@ -392,17 +391,18 @@ async def async_setup_entry(
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-        # else:
-        # TODO loop through all self.api().get_models()
-        elif result.value == ProductId.VMD_02RPS78:
-            entities.extend(
-                [
-                    AiriosSensorEntity(
-                        description, coordinator, node, via_config_entry, subentry
-                    )
-                    for description in VMD_SENSOR_ENTITIES
-                ]
-            )
+        for key, _id in coordinator.api.product_ids():
+            # dict of ids by model_key (names). Can we use node["product_name"] as key?
+            if result.value == _id and key.startswith("VMD"):
+                # only controllers, add is_controller() to model.py?
+                entities.extend(
+                    [
+                        AiriosSensorEntity(
+                            description, coordinator, node, via_config_entry, subentry
+                        )
+                        for description in VMD_SENSOR_ENTITIES
+                    ]
+                )
 
         async_add_entities(entities, config_subentry_id=subentry_id)
 
