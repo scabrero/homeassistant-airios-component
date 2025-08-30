@@ -187,10 +187,10 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
 
-        for key, _id in coordinator.api.product_ids():
+        for key, _id in coordinator.api.bridge.product_ids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
             if result.value == _id:
-                if key.startswith("VMD"):  # only controllers, is_controller() ?
+                if key.startswith("VMD-"):  # only controllers, is_controller() ?
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(

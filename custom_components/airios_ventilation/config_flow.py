@@ -671,7 +671,7 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
-        """Import nodes already bound to bridge but not in HA"""
+        """Import nodes already bound to bridge but not in HA."""
 
         def _show_form(
             continue_reply: dict[Any, Any], errors: dict[str, str]
@@ -688,58 +688,52 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
         errors: dict[str, str] = {}
         # config_entry = self._get_entry()
         continue_reply = {0: "No", 1: "Yes"}
-        if user_input is not None:
-            if user_input["reply"] is 1:
-                try:
-                    pass
-                except ValueError:
-                    errors["base"] = "unexpected_product_id"
-                    return _show_form(continue_reply, errors)
-                return await self.async_step_do_import_nodes()
-        return _show_form(continue_reply, errors)
+        if user_input is not None and user_input["reply"] == 1:
+            try:
+                pass
+            except ValueError:
+                errors["base"] = "unexpected_product_id"
+                return _show_form(continue_reply, errors)
+            return await self.async_step_do_import_nodes()
+        return self.async_abort(reason="Cancelled")
 
     async def async_step_do_import_nodes(
         self,
     ) -> SubentryFlowResult:  # compare to def async_step_do_bind_controller
         """Show the result of the import step."""
-        print("Yes, we Import!")
-        reason = "demo"
-        return self.async_abort(reason=reason)
 
-    # async def async_step_import_done(  # copied from AccessoryFlow set_bind_done
-    #         self,
-    #         user_input: dict[str, Any] | None = None,  # noqa: ARG002
-    #     ) -> SubentryFlowResult:
-    #     """Show the result of the import step."""
-    #     if self._bind_result is None:
-    #         msg = "Unexpected error, import result not defined"
-    #         raise AiriosBindingException(msg)
-    #     # if self._bind_result != BindingStatus.OUTGOING_BINDING_COMPLETED:
-    #     #     msg = f"Unexpected import result {self._bind_result}"
-    #     #     raise AiriosBindingException(msg)
-    #     if self._modbus_address is None:
-    #         msg = "Unexpected error, Modbus address not defined"
-    #         raise AiriosBindingException(msg)
-    #
-    #     config_entry = self._get_entry()
-    #     coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
-    #     api = coordinator.api
-    #     node = await api.node(self._modbus_address)
-    #     result = await node.node_rf_address()
-    #     if result is None or result.value is None:
-    #         msg = "Unexpected error reading node RF address"
-    #         raise AiriosBindingException(msg)
-    #     rf_address = result.value
+        # print("Yes, we Import!")
+        # reason = "demo"
+        # return self.async_abort(reason=reason)
 
-    # result = self.async_create_entry(
-    #     data={
-    #         CONF_NAME: self._name,
-    #         CONF_ADDRESS: self._modbus_address,
-    #         CONF_DEVICE: self._bind_product_id,
-    #         CONF_RF_ADDRESS: rf_address,
-    #     },
-    #     title=self._name,
-    # )
+        config_entry = self._get_entry()
+        coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
+        api = coordinator.api
+
+        bound_nodes = await api.nodes()
+        # AiriosBoundNodeInfo(slave_id=2, product_id=<ProductId.VMD_07RPS13: 116867>, rf_address=9852554)
+        known = list[int]
+        for item in bound_nodes:
+            known.append(item["slave_id"])
+        # remove pop existing nodes
+        _modbus_address = 2
+        _name = "Ventura"
+        node = await api.node(_modbus_address)
+        result = await node.node_rf_address()
+        if result is None or result.value is None:
+            msg = "Unexpected error reading node RF address"
+            raise AiriosBindingException(msg)
+        rf_address = result.value
+
+        return self.async_create_entry(
+            data={
+                CONF_NAME: _name,
+                CONF_ADDRESS: _modbus_address,
+                CONF_DEVICE: self._bind_product_id,
+                CONF_RF_ADDRESS: rf_address,
+            },
+            title=f"{_name}@",
+        )
 
 
 class UnexpectedProductIdError(HomeAssistantError):

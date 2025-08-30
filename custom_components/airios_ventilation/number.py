@@ -145,11 +145,11 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
         product_id = result.value
-        models = coordinator.api.models()
+        models = coordinator.api.bridge.modules
         try:
-            for key, _id in coordinator.api.product_ids():
+            for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
-                if product_id == _id and key.startswith("VMD"):
+                if product_id == _id and key.startswith("VMD-"):
                     # only controllers, add is_controller() to model.py?
                     entities.extend(
                         [
@@ -160,7 +160,7 @@ async def async_setup_entry(
                         ]
                     )
 
-                    vmd = cast(models[key].VmdNode, await api.node(modbus_address))
+                    vmd = cast("models[key].Node", await api.node(modbus_address))
                     capabilities = await vmd.capabilities()
                     if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities.value:
                         entities.extend(
@@ -199,10 +199,10 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
         if self.entity_description.set_value_fn is None:
             raise NotImplementedError
         node = await self.api().node(self.modbus_address)
-        models = self.coordinator.api().models()
+        models = self.coordinator.api().bridge.modules
         for key, v in models:
             if v == node.node_product_id():
-                vmd = cast(models[key].VmdNode, node)
+                vmd = cast("models[key].Node", node)
                 return await self.entity_description.set_value_fn(vmd, value)
         return False
 

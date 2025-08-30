@@ -38,7 +38,7 @@ PARALLEL_UPDATES = 0
 async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
     for key, v in models:
         if v == node.node_product_id():
-            vmd = cast(models[key].VmdNode, node)
+            vmd = cast("models[key].Node", node)
             return await vmd.filter_reset()
     return False
 
@@ -85,9 +85,9 @@ async def async_setup_entry(
         if result is None or result.value is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
-        for key, _id in coordinator.api.product_ids():
+        for key, _id in coordinator.api.bridge.product_ids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if result.value == _id and key.startswith("VMD"):
+            if result.value == _id and key.startswith("VMD-"):
                 # TODO check if it supports reset_filter
                 entities.extend(
                     [
@@ -122,6 +122,7 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
             node = await self.api().node(self.modbus_address)
-            await self.entity_description.press_fn(node, self.coordinator.models())
+            models = self.coordinator.api.bridge.modules
+            await self.entity_description.press_fn(node, models)
         except AiriosException as ex:
             raise HomeAssistantError from ex

@@ -89,7 +89,7 @@ async def async_setup_entry(
     entry: AiriosConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the number entities."""
+    """Set up the fan entities."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     for modbus_address, node in coordinator.data.nodes.items():
@@ -113,15 +113,14 @@ async def async_setup_entry(
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = (
-                coordinator.api.models()
-            )  # dict of available modules by model_key (names)
-            for key, _id in coordinator.api.product_ids():
+            models = coordinator.api.bridge.modules  # unused: ignore
+            # dict of available modules by model_key (names)
+            for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
-                if product_id == _id and key.startswith("VMD"):
+                if product_id == _id and key.startswith("VMD-"):
                     # only controllers, add is_controller() to model.py?
                     vmd = cast(
-                        models[key].VmdNode,
+                        "models[key].Node",
                         await coordinator.api.node(modbus_address),
                     )
                     result = await vmd.capabilities()
@@ -196,7 +195,9 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        self._node_class = coordinator.api.models()[node["product_name"]].VmdNode
+        self._node_class = coordinator.api.bridge.modules[
+            node["product_name"].value
+        ].Node
 
         _LOGGER.info(
             "Fan for node %s@%s capable of %s",
@@ -256,7 +257,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             return False
 
         try:
-            node = cast(self._node_class, await self.api().node(self.modbus_address))
+            node = cast("self._node_class", await self.api().node(self.modbus_address))
             vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
 
             # Handle temporary overrides
@@ -350,7 +351,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the away preset mode."""
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for away preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
@@ -375,7 +376,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the low preset mode."""
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for low preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -400,7 +401,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the medium preset mode."""
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for medium preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -425,7 +426,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         exhaust_fan_speed: int,
     ) -> bool:
         """Set the fans speeds for the high preset mode."""
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         msg = (
             "Setting fans speeds for high preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
@@ -458,7 +459,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             msg = f"Temporary override not available for preset [{preset_mode}]"
             raise HomeAssistantError(msg)
         vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         result = await node.capabilities()
         caps = result.value
         if VMDCapabilities.TIMER_CAPABLE not in caps:
@@ -484,7 +485,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
     @final
     async def async_filter_reset(self) -> bool:
         """Reset the filter dirty flag."""
-        node = cast(self._node_class, await self.api().node(self.modbus_address))
+        node = cast("self._node_class", await self.api().node(self.modbus_address))
         _LOGGER.info("Reset filter dirty flag for node %s", str(node))
         try:
             if not await node.filter_reset():
