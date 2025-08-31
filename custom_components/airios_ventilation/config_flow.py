@@ -721,9 +721,11 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                 new_nodes.append(nd.slave_id)
         if len(new_nodes) > 0:
             for n in new_nodes:
-                _name = str(n)  # includes @i
-                _modbus_address = n.slave_id
-                node = await api.node(_modbus_address)
+                node = await api.node(n)
+                _name = str(node)  # includes @i
+                _modbus_address = n
+                if n != node.slave_id:
+                    errors["base"] = "node address mismatch"
 
                 result = await node.node_product_id()
                 if result is None or result.value is None:
