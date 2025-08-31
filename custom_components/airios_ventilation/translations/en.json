@@ -131,7 +131,7 @@
     },
     "import": {
       "initiate_flow": {
-        "user": "Import bound nodes"
+        "user": "Import..."
       },
       "step": {
         "user": {
