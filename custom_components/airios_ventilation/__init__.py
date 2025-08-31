@@ -98,7 +98,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     sw_version = result.value
 
     _LOGGER.info("api.bridge module names:")  # Supported models:")
-    # _LOGGER.info(api.bridge.model_descriptions())
+    descr = await api.bridge.model_descriptions()
+    _LOGGER.info(descr)
 
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(

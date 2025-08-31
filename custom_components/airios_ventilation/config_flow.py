@@ -737,15 +737,18 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                 # vol.Required(CONF_NAME): str,
                 # vol.Required(CONF_DEVICE): vol.In(SUPPORTED_UNITS.keys()),  # ProductId
                 # vol.Optional(CONF_RF_ADDRESS): int,  # unique device serial number
-                self.async_create_entry(
-                    data={
-                        CONF_NAME: _name,
-                        CONF_ADDRESS: _modbus_address,
-                        CONF_DEVICE: _product_id,
-                        CONF_RF_ADDRESS: rf_address,
-                    },
-                    title=_name,
-                )
+                try:
+                    self.async_create_entry(
+                        data={
+                            CONF_NAME: _name,
+                            CONF_ADDRESS: _modbus_address,
+                            CONF_DEVICE: _product_id,
+                            CONF_RF_ADDRESS: rf_address,
+                        },
+                        title=_name,
+                    )
+                except ValueError:
+                    errors["base"] = f"device {_name} not supported yet"
             return self.async_abort(reason=errors)
         return self.async_abort(reason="No new bound nodes on bridge")
 
