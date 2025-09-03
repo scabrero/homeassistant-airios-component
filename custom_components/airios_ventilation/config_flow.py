@@ -721,7 +721,11 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                 new_nodes.append(nd.slave_id)
         if len(new_nodes) > 0:
             for n in new_nodes:
-                node = await api.node(n)
+                try:
+                    node = await api.node(n)
+                except AiriosException:
+                    errors["base"] = f"Node {n} not retrieved from Bridge"
+                    return self.async_abort(reason=errors["base"])
                 _name = str(node)  # includes @i
                 _modbus_address = n
                 if n != node.slave_id:
@@ -751,7 +755,7 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                     )
                 except ValueError:
                     errors["base"] = f"device {_name} not supported yet"
-            return self.async_abort(reason=errors)
+            return self.async_abort(reason=errors["base"])
         return self.async_abort(reason="No new bound nodes on bridge")
 
 
