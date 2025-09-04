@@ -717,15 +717,19 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
             if not (
                 entry := self.hass.config_entries.async_get_entry(str(nd.slave_id))
             ):
+                _LOGGER.debug(f"append node {nd.slave_id} to new_nodes")
                 # entry not found in hass, add slave_id to import list
                 new_nodes.append(nd.slave_id)
         if len(new_nodes) > 0:
+            _LOGGER.debug(f"new_nodes contains {len(new_nodes)} items to import")
             for n in new_nodes:
-                try:
-                    node = await api.node(n)
-                except AiriosException:
-                    errors["base"] = f"Node {n} not retrieved from Bridge"
-                    return self.async_abort(reason=errors["base"])
+                # try:
+                _LOGGER.debug(f"fetching node({n})")
+                #     node = await api.node(n)
+                # except AiriosException:
+                #     errors["base"] = f"Node {n} not retrieved from Bridge"
+                #     return self.async_abort(reason=errors["base"])
+                node = await api.node(n)
                 _name = str(node)  # includes @i
                 _modbus_address = n
                 if n != node.slave_id:
@@ -743,6 +747,7 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                 # vol.Required(CONF_NAME): str,
                 # vol.Required(CONF_DEVICE): vol.In(SUPPORTED_UNITS.keys()),  # ProductId
                 # vol.Optional(CONF_RF_ADDRESS): int,  # unique device serial number
+                _LOGGER.debug(f"create_entry {_name}")
                 try:
                     self.async_create_entry(
                         data={
