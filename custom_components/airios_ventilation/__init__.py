@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import typing
+from concurrent.futures import ThreadPoolExecutor
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -55,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryError(msg)
 
     modbus_address = entry.data[CONF_ADDRESS]
-    api = Airios(transport, modbus_address)
+    api = Airios(transport, modbus_address)  # blocking call to glob
 
     update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
@@ -97,9 +98,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryNotReady(msg)
     sw_version = result.value
 
-    _LOGGER.info("api.bridge module names:")  # Supported models:")
-    descr = await api.bridge.model_descriptions()
-    _LOGGER.info(descr)
+    # must load info from disk, don't await
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(api.bridge.load_models())
+        _LOGGER.debug(f"models loaded OK? {future.result()}")
+    # do not assume this info is available at this point, so can't yet do:
+    # _LOGGER.info("api.bridge module names:")  # Supported models:")
+    # descr = api.bridge.descriptions()
+    # _LOGGER.info(descr)
 
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(

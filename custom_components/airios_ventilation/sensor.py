@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
-    from pyairios import BRDG02R13  # unused: ignore
+    from pyairios.models.brdg_02r13 import BRDG02R13  # unused: ignore
     from pyairios.data_model import AiriosNodeData
 
     from .coordinator import AiriosDataUpdateCoordinator
