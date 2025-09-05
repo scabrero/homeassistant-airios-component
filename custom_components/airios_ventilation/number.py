@@ -145,9 +145,9 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
         product_id = result.value
-        models = coordinator.api.bridge.models  # pylint: disable=unused-variable
+        models = coordinator.api.bridge.models()  # pylint: disable=unused-variable
         try:
-            for key, _id in coordinator.api.bridge.product_ids.items():
+            for key, _id in coordinator.api.bridge.product_ids():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
                 if product_id == _id and key.startswith("VMD-"):
                     # only controllers, add is_controller() to model.py?

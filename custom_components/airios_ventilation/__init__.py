@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import typing
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -37,9 +37,7 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
 ]
 
-
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Set up Airios from a config entry."""
@@ -98,14 +96,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryNotReady(msg)
     sw_version = result.value
 
-    # must load info from disk, don't await - still blocking despite submit!
-    # with ThreadPoolExecutor(max_workers=1) as executor:
-    #     future = executor.submit(api.bridge.load_models())
-    #     _LOGGER.debug(f"models loaded: {future.result()}")
-    # do not assume this info is available at this point, so can't yet do:
-    # _LOGGER.info("api.bridge module names:")  # Supported models:")
-    # descr = api.bridge.descriptions()
-    # _LOGGER.info(descr)
+    # must load info from disk, not now, would still block despite submit!
+    # so do not assume models info is available at this point
 
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
@@ -119,14 +111,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
     return True
-
 
 async def update_listener(hass: HomeAssistant, entry: AiriosConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
-
 
 async def async_unload_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Unload a config entry."""

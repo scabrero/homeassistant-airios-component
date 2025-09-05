@@ -51,7 +51,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             raise PlatformNotReady(msg)
         product_name = node["product_name"].value
 
-        if node["product_id"] is None or node["product_id"].value is None:
+        if node["product_id"] is None:
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
         product_id = node["product_id"].value

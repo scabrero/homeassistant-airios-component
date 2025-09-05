@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
+from types import ModuleType
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
@@ -187,11 +188,14 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
 
-        # for key, _id in coordinator.api.bridge.product_ids.items():
-        for key, mod in coordinator.api.bridge.models.items():
+        mdls: dict[str, ModuleType] = coordinator.api.bridge.models()
+        _LOGGER.debug(
+            f"AIRIOS got mdls: {mdls}"
+        )
+        for item in mdls:
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if result.value == mod.pr_id():
-                if key.startswith("VMD-"):  # only controllers, is_controller() ?
+            if result.value == mdls[item].pr_id:
+                if item.startswith("VMD-"):  # only controllers, is_controller() ?
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(
@@ -205,7 +209,7 @@ async def async_setup_entry(
                             # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
                         ]
                     )
-                elif key.startswith("VMN-"):
+                elif item.startswith("VMN-"):
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(

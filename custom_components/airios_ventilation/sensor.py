@@ -391,7 +391,7 @@ async def async_setup_entry(
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-        for key, _id in coordinator.api.bridge.product_ids.items():
+        for key, _id in coordinator.api.bridge.product_ids():
             # dict of id's by model_key (names). Can we use node["product_name"] as key?
             if result.value == _id and key.startswith("VMD-"):
                 # only controllers, add is_controller() to model.py?
