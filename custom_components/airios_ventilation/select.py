@@ -81,7 +81,7 @@ async def async_setup_entry(
                 via = entry
 
         entities: list[AiriosSelectEntity] = []
-        if node["product_id"] is None or node["product_id"].value is None:
+        if node["product_id"] is None:
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
 

@@ -98,10 +98,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryNotReady(msg)
     sw_version = result.value
 
-    # must load info from disk, don't await
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(api.bridge.load_models())
-        _LOGGER.debug(f"models loaded: {future.result()}")
+    # must load info from disk, don't await - still blocking despite submit!
+    # with ThreadPoolExecutor(max_workers=1) as executor:
+    #     future = executor.submit(api.bridge.load_models())
+    #     _LOGGER.debug(f"models loaded: {future.result()}")
     # do not assume this info is available at this point, so can't yet do:
     # _LOGGER.info("api.bridge module names:")  # Supported models:")
     # descr = api.bridge.descriptions()

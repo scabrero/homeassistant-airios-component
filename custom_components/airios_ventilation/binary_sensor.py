@@ -190,7 +190,7 @@ async def async_setup_entry(
         # for key, _id in coordinator.api.bridge.product_ids.items():
         for key, mod in coordinator.api.bridge.models.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if result.value == mod.product_id():
+            if result.value == mod.pr_id():
                 if key.startswith("VMD-"):  # only controllers, is_controller() ?
                     entities.extend(
                         [
@@ -205,17 +205,17 @@ async def async_setup_entry(
                             # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
                         ]
                     )
-            elif key.startswith("VMN"):
-                entities.extend(
-                    [
-                        AiriosBinarySensorEntity(
-                            description,
-                            coordinator,
-                            node,
-                            via_config_entry,
-                            subentry,
-                        )
-                        for description in VMN_BINARY_SENSOR_ENTITIES
-                    ]
-                )
+                elif key.startswith("VMN-"):
+                    entities.extend(
+                        [
+                            AiriosBinarySensorEntity(
+                                description,
+                                coordinator,
+                                node,
+                                via_config_entry,
+                                subentry,
+                            )
+                            for description in VMN_BINARY_SENSOR_ENTITIES
+                        ]
+                    )
         async_add_entities(entities, config_subentry_id=subentry_id)

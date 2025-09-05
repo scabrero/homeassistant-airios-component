@@ -113,12 +113,12 @@ async def async_setup_entry(
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = coordinator.api.bridge.models()  # unused: ignore
+            models = coordinator.api.bridge.models  # pylint: disable=unused-variable
             # dict of available modules by model_key (names)
             for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
                 if product_id == _id and key.startswith("VMD-"):
-                    # only controllers, add is_controller() to model.py?
+                    # only for controllers, add is_controller() to model.py?
                     vmd = cast(
                         "models[key].Node",
                         await coordinator.api.node(modbus_address),
@@ -195,7 +195,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        self._node_class = coordinator.api.bridge.models()[
+        self._node_class = coordinator.api.bridge.models[
             node["product_name"].value
         ].Node
 
@@ -203,7 +203,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             "Fan for node %s@%s capable of %s",
             node["product_name"],
             node["slave_id"],
-            capabilities,  # not all airios fans support a capabilities register
+            capabilities,  # not all Airios fans support a capabilities register
         )
 
         self._attr_preset_modes = [

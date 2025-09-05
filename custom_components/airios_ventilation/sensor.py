@@ -47,7 +47,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
-    from pyairios.models.brdg_02r13 import BRDG02R13  # unused: ignore
+    from pyairios.models.brdg_02r13 import BRDG02R13  # noqa: F401
     from pyairios.data_model import AiriosNodeData
 
     from .coordinator import AiriosDataUpdateCoordinator
@@ -391,8 +391,8 @@ async def async_setup_entry(
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-        for key, _id in coordinator.api.bridge.product_ids:
-            # dict of ids by model_key (names). Can we use node["product_name"] as key?
+        for key, _id in coordinator.api.bridge.product_ids.items():
+            # dict of id's by model_key (names). Can we use node["product_name"] as key?
             if result.value == _id and key.startswith("VMD-"):
                 # only controllers, add is_controller() to model.py?
                 entities.extend(

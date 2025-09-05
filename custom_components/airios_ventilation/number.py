@@ -145,9 +145,9 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
         product_id = result.value
-        models = coordinator.api.bridge.models()  # unused: ignore
+        models = coordinator.api.bridge.models  # pylint: disable=unused-variable
         try:
-            for key, _id in coordinator.api.bridge.product_ids:
+            for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
                 if product_id == _id and key.startswith("VMD-"):
                     # only controllers, add is_controller() to model.py?
@@ -199,7 +199,7 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
         if self.entity_description.set_value_fn is None:
             raise NotImplementedError
         node = await self.api().node(self.modbus_address)
-        models = self.coordinator.api().bridge.models()
+        models = self.coordinator.api().bridge.models
         for key, v in models.items():
             if v == node.node_product_id():
                 vmd = cast("models[key].Node", node)
