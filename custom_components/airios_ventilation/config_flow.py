@@ -686,17 +686,16 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
             )
 
         errors: dict[str, str] = {}
-        # config_entry = self._get_entry()
         continue_reply = {0: "No", 1: "Yes"}
         if user_input is not None:
             if user_input["reply"] == 1:
                 try:
                     return await self.async_step_do_import_nodes()
                 except ValueError:
-                    errors["base"] = "unexpected_product_id"
+                    errors["base"] = "import failed"
                     return self.async_abort(reason="An error occurred")
             else:  # No
-                return self.async_abort(reason="You said No")
+                return self.async_abort(reason="Cancelled")
         return _show_form(continue_reply, errors)
 
     async def async_step_do_import_nodes(
@@ -713,22 +712,15 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
         bound_nodes = await api.nodes()
         # AiriosBoundNodeInfo(slave_id=2, product_id=<ProductId.VMD_07RPS13: 116867>, rf_address=9852554)
         for nd in bound_nodes:
-            # get device by node
-            if not (
-                entry := self.hass.config_entries.async_get_entry(str(nd.slave_id))
-            ):
+            # try to get device by node id
+            if self.hass.config_entries.async_get_entry(str(nd.slave_id)) is None:
                 _LOGGER.debug(f"append node {nd.slave_id} to new_nodes")
                 # entry not found in hass, add slave_id to import list
                 new_nodes.append(nd.slave_id)
         if len(new_nodes) > 0:
             _LOGGER.debug(f"new_nodes contains {len(new_nodes)} items to import")
             for n in new_nodes:
-                # try:
                 _LOGGER.debug(f"fetching node({n})")
-                #     node = await api.node(n)
-                # except AiriosException:
-                #     errors["base"] = f"Node {n} not retrieved from Bridge"
-                #     return self.async_abort(reason=errors["base"])
                 node = await api.node(n)
                 _name = str(node)  # includes @i
                 _modbus_address = n
@@ -760,7 +752,7 @@ class ImportSubentryFlowHandler(ConfigSubentryFlow):
                     )
                 except ValueError:
                     errors["base"] = f"device {_name} not supported yet"
-            return self.async_abort(reason=errors["base"])
+            return self.async_abort(reason=errors)
         return self.async_abort(reason="No new bound nodes on bridge")
 
 

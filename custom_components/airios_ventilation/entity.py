@@ -39,6 +39,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         super().__init__(coordinator)
 
         self.modbus_address = node["slave_id"]
+        # in pymodbus>=3.11 keyword "device_id". property name not refactored in pyairios yet
 
         if node["rf_address"] is None or node["rf_address"].value is None:
             msg = "Node RF address not available"
