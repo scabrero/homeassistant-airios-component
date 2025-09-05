@@ -113,7 +113,7 @@ async def async_setup_entry(
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = coordinator.api.bridge.modules  # unused: ignore
+            models = coordinator.api.bridge.models  # unused: ignore
             # dict of available modules by model_key (names)
             for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?

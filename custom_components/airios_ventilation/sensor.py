@@ -344,7 +344,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
 
     @final
     async def async_factory_reset(self) -> bool:
-        """Reset the bridge."""
+        """Factory reset the bridge."""
         node = cast("BRDG02R13", await self.api().node(self.modbus_address))
         _LOGGER.info("Factory reset node %s", str(node))
         try:

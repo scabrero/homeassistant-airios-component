@@ -36,7 +36,7 @@ PARALLEL_UPDATES = 0
 
 
 async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
-    for key, v in models:
+    for key, v in models.items():
         if v == node.node_product_id():
             vmd = cast("models[key].Node", node)
             return await vmd.filter_reset()

@@ -122,7 +122,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
 
         try:
             # only for VMD-02RPS78 controller
-            node_class = self.coordinator.api.bridge.modules[
+            node_class = self.coordinator.api.bridge.models[
                 self.node["product_name"].value
             ].Node  # unused: ignore
             node_mod = cast("node_class", await self.api().node(self.modbus_address))
