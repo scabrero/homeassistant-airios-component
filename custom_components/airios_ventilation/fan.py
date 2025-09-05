@@ -113,7 +113,7 @@ async def async_setup_entry(
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = coordinator.api.bridge.models  # unused: ignore
+            models = coordinator.api.bridge.models()  # unused: ignore
             # dict of available modules by model_key (names)
             for key, _id in coordinator.api.bridge.product_ids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
@@ -195,7 +195,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        self._node_class = coordinator.api.bridge.modules[
+        self._node_class = coordinator.api.bridge.models()[
             node["product_name"].value
         ].Node
 
