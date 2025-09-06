@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
+from types import ModuleType
 from typing import Any, cast
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
@@ -51,7 +52,7 @@ def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
     return BYPASS_MODE_TO_NAME.get(v)
 
 
-VMD_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
+VMD_SELECT_SETBYPMODE_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
     AiriosSelectEntityDescription(  # only for vmd_02rps78
         key="bypass_mode",
         translation_key="bypass_mode",
@@ -60,6 +61,8 @@ VMD_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
     ),
 )
 
+models: dict[str, ModuleType]
+
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
@@ -67,7 +70,12 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the selectors."""
+    global models
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
+
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -81,17 +89,18 @@ async def async_setup_entry(
                 via = entry
 
         entities: list[AiriosSelectEntity] = []
+
         if node["product_id"] is None:
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
 
-        # only for VMD (controllers), not REM
-        if node["product_name"].value.startswith("VMD-"):
+        # only for VMD-02RPS78 (controllers), not REM
+        if node["product_name"].value == "VMD-02RPS78":
             entities.extend(
                 [
                     AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    # TODO first check if model supports this: if select coordinator.api().etc...
-                    for description in VMD_SELECT_ENTITIES
+                    # TODO first check if model supports this set_option: if select coordinator.api().etc...
+                    for description in VMD_SELECT_SETBYPMODE_ENTITIES
                 ]
             )
         async_add_entities(entities, config_subentry_id=subentry_id)
@@ -110,7 +119,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         via_config_entry: ConfigEntry | None,
         subentry: ConfigSubentry | None,
     ) -> None:
-        """Initialize a Airios select entity."""
+        """Initialize an Airios select entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
         self._attr_current_option = None
@@ -121,12 +130,11 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
             return False
 
         try:
-            # only for VMD-02RPS78 controller
-            mods = self.coordinator.api.bridge.models
-            node_class = mods[
-                self.node["product_name"].value
-            ].Node  # unused: ignore
-            node_mod = cast("node_class", await self.api().node(self.modbus_address))
+            # only called for VMD-02RPS78 controller
+            _mod = models.get("VMD-02RPS78")
+            node_mod = cast(
+                type[str(_mod) + ".Node"], await self.api().node(self.modbus_address)
+            )
             bypass_mode = NAME_TO_BYPASS_MODE[option]
             ret = await node_mod.set_bypass_mode(bypass_mode)
         except AiriosException as ex:

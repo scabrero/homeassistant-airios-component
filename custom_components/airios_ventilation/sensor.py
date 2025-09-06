@@ -299,6 +299,12 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
+            # assert (
+            #     self.entity_description.key in device.keys(),
+            #     f"Unsupported sensor key: {self.entity_description}",
+            # )
+            # KeyError happens when keys come along unknown to the device
+            # assert and report to develop model definition
             result = device[self.entity_description.key]
             _LOGGER.debug(
                 "Node %s, sensor %s, result %s",
@@ -317,7 +323,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
                 if result.status is not None:
                     self.set_extra_state_attributes_internal(result.status)
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, KeyError):
             _LOGGER.exception(
                 "Failed to update node %s sensor %s",
                 f"0x{self.rf_address:08X}",
@@ -365,6 +371,10 @@ async def async_setup_entry(
     """Set up the sensors."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    prids = coordinator.data.nodes[bridge_id]["product_ids"]
+
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
         subentry_id = None
@@ -376,13 +386,13 @@ async def async_setup_entry(
                 subentry = se
                 via_config_entry = entry
 
-        result = node["product_id"]
-        if result is None or result.value is None:
+        product_id = node["product_id"]
+        if product_id is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
 
         entities: list[AiriosSensorEntity] = []
-        if result.value == ProductId.BRDG_02R13:
+        if product_id == ProductId.BRDG_02R13:
             entities.extend(
                 [
                     AiriosSensorEntity(
@@ -391,9 +401,9 @@ async def async_setup_entry(
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-        for key, _id in coordinator.api.bridge.product_ids():
+        for key, _id in prids.items():
             # dict of id's by model_key (names). Can we use node["product_name"] as key?
-            if result.value == _id and key.startswith("VMD-"):
+            if product_id == _id and key.startswith("VMD-"):
                 # only controllers, add is_controller() to model.py?
                 entities.extend(
                     [

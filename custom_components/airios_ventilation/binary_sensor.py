@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from types import ModuleType
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
@@ -162,6 +161,10 @@ async def async_setup_entry(
     """Set up the binary sensors."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    prids = coordinator.data.nodes[bridge_id]["product_ids"]
+
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
         subentry_id = None
@@ -183,19 +186,15 @@ async def async_setup_entry(
             )
             for description in NODE_BINARY_SENSOR_ENTITIES
         ]
-        result = node["product_id"]
-        if result is None or result.value is None:
+        product_id = node["product_id"]
+        if product_id is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
 
-        mdls: dict[str, ModuleType] = coordinator.api.bridge.models()
-        _LOGGER.debug(
-            f"AIRIOS got mdls: {mdls}"
-        )
-        for item in mdls:
+        for key, _id in prids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if result.value == mdls[item].pr_id:
-                if item.startswith("VMD-"):  # only controllers, is_controller() ?
+            if product_id == _id:
+                if key.startswith("VMD-"):  # only controllers, is_controller() ?
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(
@@ -209,7 +208,7 @@ async def async_setup_entry(
                             # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
                         ]
                     )
-                elif item.startswith("VMN-"):
+                elif key.startswith("VMN-"):
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(

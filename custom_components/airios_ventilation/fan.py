@@ -14,7 +14,10 @@ from homeassistant.components.fan import (
 )
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
+from homeassistant.exceptions import (
+    HomeAssistantError,
+    PlatformNotReady,
+)
 from homeassistant.helpers import entity_platform
 from pyairios import AiriosException
 from pyairios.constants import (
@@ -75,13 +78,14 @@ PRESET_TO_VMD_SPEED = {
     "auto": VMDRequestedVentilationSpeed.AUTO,
 }
 
-
 VMD_FAN_ENTITIES: tuple[FanEntityDescription, ...] = (
     FanEntityDescription(
         key="ventilation_speed",
         translation_key="ventilation_speed",
     ),
 )
+
+models: dict[str, ModuleType]
 
 
 async def async_setup_entry(
@@ -90,7 +94,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the fan entities."""
+    global models
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
+
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
+    prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -105,22 +115,24 @@ async def async_setup_entry(
 
         entities: list[FanEntity] = []
 
-        _id = node["product_id"]
-        if _id is None or _id.value is None:
+        product_id = node["product_id"]
+        if product_id is None:
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
-        product_id = _id.value
 
         try:
             # lookup node model family by key # compare to pyairios/cli.py
-            models = coordinator.api.bridge.models()  # pylint: disable=unused-variable
-            # dict of available modules by model_key (names)
-            for key, _id in coordinator.api.bridge.product_ids():
+            for key, _id in prids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
                 if product_id == _id and key.startswith("VMD-"):
-                    # only for controllers, add is_controller() to model.py?
+                    # only for controllers. Add is_controller() flag to model.py?
+                    # ValueError: too many values to unpack (expected 2)
+                    # next works fine in pyairios CLI:
+                    # for key, mod in models.items():
+                    # _LOGGER.warning(f"{key} {str(mod.Node)} {mod.product_descr} {mod.pr_id}")
+                    _mod = models.get(key)
                     vmd = cast(
-                        "models[key].Node",
+                        type[str(_mod) + ".Node"],
                         await coordinator.api.node(modbus_address),
                     )
                     result = await vmd.capabilities()
@@ -195,10 +207,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         """Initialize the Airios fan entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
-        mods = coordinator.api.bridge.models()
-        self._node_class = mods[
-            node["product_name"].value
-        ].Node
+        self._node_class = models[node["product_name"].value].Node
 
         _LOGGER.info(
             "Fan for node %s@%s capable of %s",

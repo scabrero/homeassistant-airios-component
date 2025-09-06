@@ -55,6 +55,8 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
         product_id = node["product_id"].value
+        # without .value get TypeError: unsupported format string "BRDG-02R13"
+        assert isinstance(product_id, int), f"Wrong format for product_id: {product_id}"
 
         if node["sw_version"] is None or node["sw_version"].value is None:
             msg = "Node software version not available"

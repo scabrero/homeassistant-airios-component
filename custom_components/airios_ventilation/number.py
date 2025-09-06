@@ -127,6 +127,11 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
     api = coordinator.api
 
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
+    prids = coordinator.data.nodes[bridge_id]["product_ids"]
+
     for modbus_address, node_info in coordinator.data.nodes.items():
         # Find matching subentry
         subentry_id = None
@@ -140,14 +145,13 @@ async def async_setup_entry(
 
         entities: list[NumberEntity] = []
 
-        result = node_info["product_id"]
-        if result is None or result.value is None:
+        product_id = node_info["product_id"]
+        if product_id is None:
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
-        product_id = result.value
-        models = coordinator.api.bridge.models()  # pylint: disable=unused-variable
+
         try:
-            for key, _id in coordinator.api.bridge.product_ids():
+            for key, _id in prids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
                 if product_id == _id and key.startswith("VMD-"):
                     # only controllers, add is_controller() to model.py?
@@ -159,8 +163,11 @@ async def async_setup_entry(
                             for description in VMD_FREEVENT_NUMBER_ENTITIES
                         ]
                     )
-
-                    vmd = cast("models[key].Node", await api.node(modbus_address))
+                    _mod = models.get(key)
+                    vmd = cast(
+                        type[str(_mod) + ".Node"],
+                        await coordinator.api.node(modbus_address),
+                    )
                     capabilities = await vmd.capabilities()
                     if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities.value:
                         entities.extend(
@@ -200,9 +207,10 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
             raise NotImplementedError
         node = await self.api().node(self.modbus_address)
         models = self.coordinator.api().bridge.models
-        for key, v in models.items():
-            if v == node.node_product_id():
-                vmd = cast("models[key].Node", node)
+        for key, _id in models.items():
+            if _id == node.node_product_id():
+                _mod = models.get(key)
+                vmd = cast(type[str(_mod) + ".Node"], node)
                 return await self.entity_description.set_value_fn(vmd, value)
         return False
 

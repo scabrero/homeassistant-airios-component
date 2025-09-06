@@ -39,6 +39,9 @@ PLATFORMS: list[Platform] = [
 
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
 
+modbus_address: int
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Set up Airios from a config entry."""
     bridge_type = entry.data[CONF_TYPE]
@@ -54,11 +57,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryError(msg)
 
     modbus_address = entry.data[CONF_ADDRESS]
-    api = Airios(transport, modbus_address)  # blocking call to glob
+    api = Airios(transport, modbus_address)  # calls lib pyairios __init__
 
     update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
 
     bridge_rf_address = await api.bridge.node_rf_address()
     if bridge_rf_address is None or bridge_rf_address.value is None:
@@ -96,9 +99,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryNotReady(msg)
     sw_version = result.value
 
-    # must load info from disk, not now, would still block despite submit!
-    # so do not assume models info is available at this point
-
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
@@ -111,11 +111,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # sets up Airios fans, sensors etc.
     return True
+
 
 async def update_listener(hass: HomeAssistant, entry: AiriosConfigEntry) -> None:
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Unload a config entry."""

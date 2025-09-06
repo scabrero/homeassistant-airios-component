@@ -36,9 +36,10 @@ PARALLEL_UPDATES = 0
 
 
 async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
-    for key, v in models.items():
-        if v == node.node_product_id():
-            vmd = cast("models[key].Node", node)
+    for key, _id in models.items():
+        if _id == node.node_product_id():
+            _mod = models.get(key)
+            vmd = cast(type[str(_mod) + ".Node"], node)
             return await vmd.filter_reset()
     return False
 
@@ -59,6 +60,8 @@ VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
     ),
 )
 
+models: dict[str, ModuleType]
+
 
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
@@ -66,7 +69,13 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the button platform."""
+    global models
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
+
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
+    prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -81,13 +90,14 @@ async def async_setup_entry(
 
         entities: list[AiriosButtonEntity] = []
 
-        result = node["product_id"]
-        if result is None or result.value is None:
+        product_id = node["product_id"]
+        if product_id is None:
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
-        for key, _id in coordinator.api.bridge.product_ids():
+
+        for key, _id in prids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if result.value == _id and key.startswith("VMD-"):
+            if product_id == _id and key.startswith("VMD-"):
                 # TODO check if it supports reset_filter
                 entities.extend(
                     [
@@ -122,7 +132,6 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
             node = await self.api().node(self.modbus_address)
-            models = self.coordinator.api.bridge.models()
             await self.entity_description.press_fn(node, models)
         except AiriosException as ex:
             raise HomeAssistantError from ex
