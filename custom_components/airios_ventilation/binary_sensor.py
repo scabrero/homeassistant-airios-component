@@ -162,7 +162,7 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    bridge_id = entry.data[CONF_ADDRESS]
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
@@ -194,7 +194,7 @@ async def async_setup_entry(
         for key, _id in prids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
             if product_id == _id:
-                if key.startswith("VMD-"):  # only controllers, is_controller() ?
+                if key.startswith("VMD-"):  # only controllers, add is_controller() in pyairios?
                     entities.extend(
                         [
                             AiriosBinarySensorEntity(

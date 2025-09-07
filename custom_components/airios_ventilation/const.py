@@ -30,12 +30,12 @@ CONF_DEFAULT_NETWORK_MODBUS_ADDRESS = 207
 
 
 # TODO fetch these from api for easy maintenance, not const > move to configflow.init.api
-SUPPORTED_UNITS: dict[str, ProductId] = {
-    "Siber DF Optima 2": ProductId.VMD_02RPS78,
-    "Siber DF EVO": ProductId.VMD_02RPS78,
-    "ClimaRad Ventura V1": ProductId.VMD_07RPS13,
+SUPPORTED_UNITS: dict[str, int] = {
+    "Siber DF Optima 2": 0x0001C892,  # ProductId.VMD_02RPS78,
+    "Siber DF EVO": 0x0001C892,  # ProductId.VMD_02RPS78,
+    "ClimaRad Ventura V1": 0x0001C883,  # ProductId.VMD_07RPS13,
 }
 # TODO fetch these from api for easy maintenance, not const > move to configflow.init.api
-SUPPORTED_ACCESSORIES: dict[str, ProductId] = {
-    "Siber 4 button remote": ProductId.VMN_05LM02,
+SUPPORTED_ACCESSORIES: dict[str, int] = {
+    "Siber 4 button remote": 0x0001C83E,  # ProductId.VMN_05LM02,
 }

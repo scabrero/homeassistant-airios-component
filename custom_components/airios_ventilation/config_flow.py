@@ -342,7 +342,7 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
 
     _bind_task: asyncio.Task | None = None
     _bind_result: BindingStatus | None = None
-    _bind_product_id: ProductId
+    _bind_product_id: int
     _bind_product_serial: int | None
     _modbus_address: int | None
     _name: str | None
@@ -358,7 +358,7 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
             try:
                 product = user_input[CONF_DEVICE]
                 product_id = SUPPORTED_UNITS.get(product)
-                self._bind_product_id = ProductId(product_id)
+                self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"
             return await self.async_step_do_bind_controller()
@@ -499,7 +499,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
     _bind_task: asyncio.Task | None = None
     _bind_result: BindingStatus | None = None
     _bind_controller_modbus_address: int
-    _bind_product_id: ProductId
+    _bind_product_id: int
     _modbus_address: int | None
     _name: str | None
 
@@ -535,7 +535,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             try:
                 product = user_input[CONF_DEVICE]
                 product_id = SUPPORTED_ACCESSORIES.get(product)
-                self._bind_product_id = ProductId(product_id)
+                self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"
                 return _show_form(bound_controllers, errors)

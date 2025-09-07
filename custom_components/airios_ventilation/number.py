@@ -128,9 +128,10 @@ async def async_setup_entry(
     api = coordinator.api
 
     # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    bridge_id = entry.data[CONF_ADDRESS]
     models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
+    # also: descriptions
 
     for modbus_address, node_info in coordinator.data.nodes.items():
         # Find matching subentry

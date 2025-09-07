@@ -372,7 +372,7 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    bridge_id = entry.data[CONF_ADDRESS]
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
