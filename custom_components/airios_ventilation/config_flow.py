@@ -33,7 +33,7 @@ from homeassistant.const import (
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from pyairios import Airios, AiriosException, AiriosRtuTransport, AiriosTcpTransport
-from pyairios.constants import BindingStatus  # , ImportStatus
+from pyairios.constants import BindingStatus
 from pyairios.exceptions import AiriosBindingException
 from pyairios.node import ProductId
 
@@ -234,7 +234,7 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_validate_bridge(self, api: Airios) -> int:
         result = await api.bridge.node_product_id()
-        if result.value != ProductId.BRDG_02R13:
+        if result != ProductId.BRDG_02R13:  # not result.value
             raise UnexpectedProductIdError
 
         result = await api.bridge.node_rf_address()
@@ -308,7 +308,6 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
         return {
             "controller": ControllerSubentryFlowHandler,
             "accessory": AccessorySubentryFlowHandler,
-            "import": ImportSubentryFlowHandler,
         }
 
 
@@ -660,100 +659,6 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             },
             title=self._name,
         )
-
-
-class ImportSubentryFlowHandler(ConfigSubentryFlow):
-    """Handle subentry import flow."""
-
-    # _added_nodes: dict[int, str]
-    # _import_result: ImportStatus | None = None
-
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> SubentryFlowResult:
-        """Import nodes already bound to bridge but not in HA."""
-
-        def _show_form(
-            continue_reply: dict[Any, Any], errors: dict[str, str]
-        ) -> SubentryFlowResult:
-            import_schema = vol.Schema(
-                {
-                    vol.Required("reply"): vol.In(continue_reply),
-                }
-            )
-            return self.async_show_form(
-                step_id="user", data_schema=import_schema, errors=errors
-            )
-
-        errors: dict[str, str] = {}
-        continue_reply = {0: "No", 1: "Yes"}
-        if user_input is not None:
-            if user_input["reply"] == 1:
-                try:
-                    return await self.async_step_do_import_nodes()
-                except ValueError:
-                    errors["base"] = "import failed"
-                    return self.async_abort(reason="An error occurred")
-            else:  # No
-                return self.async_abort(reason="Cancelled")
-        return _show_form(continue_reply, errors)
-
-    async def async_step_do_import_nodes(
-        self,
-    ) -> SubentryFlowResult:  # compare to def async_step_do_bind_controller
-        """Show the result of the import step."""
-
-        errors: dict[str, str] = {}
-        _LOGGER.debug("Searching for bound Airios nodes not yet in HA")
-        config_entry = self._get_entry()
-        coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
-        api = coordinator.api
-        new_nodes = list()
-        bound_nodes = await api.nodes()
-        # AiriosBoundNodeInfo(slave_id=2, product_id=<ProductId.VMD_07RPS13: 116867>, rf_address=9852554)
-        for nd in bound_nodes:
-            # try to get device by node id
-            if self.hass.config_entries.async_get_entry(str(nd.slave_id)) is None:
-                _LOGGER.debug(f"append node {nd.slave_id} to new_nodes")
-                # entry not found in hass, add slave_id to import list
-                new_nodes.append(nd.slave_id)
-        if len(new_nodes) > 0:
-            _LOGGER.debug(f"new_nodes contains {len(new_nodes)} items to import")
-            for n in new_nodes:
-                _LOGGER.debug(f"fetching node({n})")
-                node = await api.node(n)
-                _name = str(node)  # includes @i
-                _modbus_address = n
-                if n != node.slave_id:
-                    errors["base"] = "node address mismatch"
-
-                result = await node.node_product_id()
-                if result is None or result.value is None:
-                    errors["base"] = "unexpected_product_id"
-                _product_id = result.value
-
-                result = await node.node_rf_address()
-                if result is None or result.value is None:
-                    errors["base"] = "unexpected_rf_address"
-                rf_address = result.value
-                # vol.Required(CONF_NAME): str,
-                # vol.Required(CONF_DEVICE): vol.In(SUPPORTED_UNITS.keys()),  # ProductId
-                # vol.Optional(CONF_RF_ADDRESS): int,  # unique device serial number
-                _LOGGER.debug(f"create_entry {_name}")
-                try:
-                    self.async_create_entry(
-                        data={
-                            CONF_NAME: _name,
-                            CONF_ADDRESS: _modbus_address,
-                            CONF_DEVICE: _product_id,
-                            CONF_RF_ADDRESS: rf_address,
-                        },
-                        title=_name,
-                    )
-                except ValueError:
-                    errors["base"] = f"device {_name} not supported yet"
-            return self.async_abort(reason=errors)
-        return self.async_abort(reason="No new bound nodes on bridge")
 
 
 class UnexpectedProductIdError(HomeAssistantError):

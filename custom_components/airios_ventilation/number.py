@@ -154,7 +154,7 @@ async def async_setup_entry(
         try:
             for key, _id in prids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
-                if product_id == _id and key.startswith("VMD-"):
+                if product_id == _id and key.startswith("VMD-02"):
                     # only controllers, add is_controller() to model.py?
                     entities.extend(
                         [
@@ -169,8 +169,10 @@ async def async_setup_entry(
                         type[str(_mod) + ".Node"],
                         await coordinator.api.node(modbus_address),
                     )
-                    capabilities = await vmd.capabilities()
-                    if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities.value:
+                    # result = await vmd.capabilities()
+                    # capabilities = result.value
+                    capabilities = 0  # DEBUG HA startup error EBR waiting for pyairios lib reinstall
+                    if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities:
                         entities.extend(
                             [
                                 AiriosNumberEntity(

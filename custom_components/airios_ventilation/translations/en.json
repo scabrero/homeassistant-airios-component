@@ -216,6 +216,13 @@
       },
       "defrost": {
         "name": "Defrost"
+      },
+      "base_vent_enabled": {
+        "name": "Base ventilation enabled",
+        "state": {
+          "off": "Off",
+          "on": "On"
+        }
       }
     },
     "button": {
@@ -263,6 +270,15 @@
       "exhaust_fan_speed": {
         "name": "Exhaust fan speed"
       },
+      "co2_level": {
+        "name": "Current CO2 level"
+      },
+      "co2_setpoint": {
+        "name": "CO2 Setpoint"
+      },
+      "base_vent_level": {
+        "name": "Base ventilation level"
+      },
       "error_code": {
         "name": "Error code",
         "state": {
@@ -281,6 +297,9 @@
       },
       "filter_duration_days": {
         "name": "Filter duration"
+      },
+      "filter_remaining_days": {
+        "name": "Filter remaining"
       },
       "filter_remaining_percent": {
         "name": "Filter remaining"

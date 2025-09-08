@@ -94,7 +94,7 @@ async def async_setup_entry(
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
 
-        # only for VMD-02RPS78 (controllers), not REM
+        # only for VMD-02RPS78 (controller), not REM
         if node["product_name"].value == "VMD-02RPS78":
             entities.extend(
                 [

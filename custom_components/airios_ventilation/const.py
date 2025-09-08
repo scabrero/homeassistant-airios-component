@@ -2,8 +2,6 @@
 
 from enum import IntEnum, auto
 
-from pyairios import ProductId
-
 
 class BridgeType(IntEnum):
     """Type of RF bridge."""

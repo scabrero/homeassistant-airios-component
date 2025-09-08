@@ -135,8 +135,11 @@ async def async_setup_entry(
                         type[str(_mod) + ".Node"],
                         await coordinator.api.node(modbus_address),
                     )
-                    result = await vmd.capabilities()
-                    capabilities = result.value
+                    # result = await vmd.capabilities()
+                    # capabilities = result.value
+                    capabilities = (
+                        VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
+                    )  # DEBUG EBR waiting for pyairios lib reinstall, error
                     entities.extend(
                         [
                             AiriosFanEntity(
@@ -470,8 +473,8 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             raise HomeAssistantError(msg)
         vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
         node = cast("self._node_class", await self.api().node(self.modbus_address))
-        result = await node.capabilities()
-        caps = result.value
+        # result = await node.capabilities()
+        caps = 0  # EBR debug was: result.value
         if VMDCapabilities.TIMER_CAPABLE not in caps:
             msg = f"Device {node!s} does not support preset temporary override"
             raise HomeAssistantError(msg)

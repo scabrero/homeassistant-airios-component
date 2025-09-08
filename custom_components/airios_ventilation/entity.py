@@ -54,8 +54,13 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         if node["product_id"] is None:
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
-        product_id = node["product_id"]
-        # without .value get TypeError: unsupported format string "BRDG-02R13"
+        if isinstance(node["product_id"], int):
+            product_id = node[
+                "product_id"
+            ]  # BRDG ProductId slipping through despite refactor
+        else:
+            product_id = node["product_id"].value
+        # without .value get TypeError: unsupported format string "BRDG-02R13" (only)
         # but with .value get error: not for int (bin.sensor, number) 2025-09-07 EBR)
         # plus AssertionError: Wrong format for product_id: BRDG-02R13
         # confirm we run latest stable pyairios version??

@@ -13,5 +13,5 @@
   "requirements": [
     "pyairios @ git+https://github.com/silverailscolo/pyairios@eb-ventura"
   ],
-  "version": "1.0.1-b10"
+  "version": "1.0.1-b13"
 }

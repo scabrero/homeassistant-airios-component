@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 import typing
-# from concurrent.futures import ThreadPoolExecutor
 
+# from concurrent.futures import ThreadPoolExecutor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ADDRESS,
@@ -88,10 +88,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     product_name = result.value
 
     result = await api.bridge.node_product_id()
-    if result is None or result.value is None:
+    if result is None:  # or result.value is None:
         msg = "Node product ID not available"
         raise ConfigEntryNotReady(msg)
-    product_id = result.value
+    if isinstance(result, int):
+        product_id = result
+    else:
+        product_id = result.value  # still seeing a ProductId packed?
+        _LOGGER.debug(
+            "airios_cc init - old style product_id received for {product_name}"
+        )
 
     result = await api.bridge.node_software_version()
     if result is None or result.value is None:
