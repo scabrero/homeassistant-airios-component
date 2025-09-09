@@ -130,6 +130,10 @@ NODE_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     ),
 )
 
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-02xxx is added that doesn't support the following binary sensors,
+# or in fact supports more than these: rename or subclass
+
 VMD_02_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     AiriosBinarySensorEntityDescription(
         key="filter_dirty",

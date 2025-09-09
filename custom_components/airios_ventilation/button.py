@@ -51,6 +51,10 @@ class AiriosButtonEntityDescription(ButtonEntityDescription):
     press_fn: Callable[[AiriosNode], dict[str, ModuleType], Awaitable[bool]]
 
 
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-xxx is added that doesn't support the following buttons/functions,
+# or in fact supports more than these: rename or subclass
+
 VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
     AiriosButtonEntityDescription(
         key="filter_reset",
@@ -73,8 +77,8 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
-    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
+    bridge_id = entry.data[CONF_ADDRESS]
+    models = coordinator.data.nodes[bridge_id]["models"]  # added in pyairios data_model
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():

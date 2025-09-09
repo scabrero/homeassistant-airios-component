@@ -52,6 +52,10 @@ def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
     return BYPASS_MODE_TO_NAME.get(v)
 
 
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device/rev VMD-02RPS78 is added that doesn't support the following selects/functions,
+# or in fact supports more than these: rename or subclass
+
 VMD_SELECT_SETBYPMODE_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
     AiriosSelectEntityDescription(  # only for vmd_02rps78
         key="bypass_mode",
@@ -99,7 +103,7 @@ async def async_setup_entry(
             entities.extend(
                 [
                     AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    # TODO first check if model supports this set_option: if select coordinator.api().etc...
+                    # TODO first check if model supports this set_option?
                     for description in VMD_SELECT_SETBYPMODE_ENTITIES
                 ]
             )

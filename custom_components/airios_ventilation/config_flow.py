@@ -35,7 +35,6 @@ from homeassistant.exceptions import HomeAssistantError
 from pyairios import Airios, AiriosException, AiriosRtuTransport, AiriosTcpTransport
 from pyairios.constants import BindingStatus
 from pyairios.exceptions import AiriosBindingException
-from pyairios.node import ProductId
 
 from .const import (
     CONF_BRIDGE_RF_ADDRESS,
@@ -46,8 +45,6 @@ from .const import (
     CONF_RF_ADDRESS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    SUPPORTED_ACCESSORIES,
-    SUPPORTED_UNITS,
     BridgeType,
 )
 
@@ -59,6 +56,29 @@ if typing.TYPE_CHECKING:
 CONF_MANUAL_PATH = "Enter Manually"
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def supported_controllers(
+    coordinator, bridge_address: int, prefix: str
+) -> dict[str, int]:
+    """Get supported models to use in config_flow BindController.
+    :param coordinator: Coordinator to Airios lib
+    :param bridge_address: the bridge node address
+    :param prefix: filter for device types (TODO use model property)
+    :return: dict of supported models matching prefix
+    """
+    prids = coordinator.data.nodes[bridge_address]["product_ids"]
+    descr = coordinator.data.nodes[bridge_address]["model_descriptions"]
+    res = {}
+    for item in prids:
+        if item.startswith(prefix):  # if node["device_type"] flag == type.CTR
+            if isinstance(descr[item], tuple):  # a definition can support >1 fan types
+                for sub_item in descr[item]:
+                    res[sub_item] = prids[item]
+            else:
+                res[descr[item]] = prids[item]
+    _LOGGER.debug(res)
+    return res
 
 
 class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -234,7 +254,7 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_validate_bridge(self, api: Airios) -> int:
         result = await api.bridge.node_product_id()
-        if result != ProductId.BRDG_02R13:  # not result.value
+        if result != 0x0001C849:  # ProductId.BRDG_02R13:  # TODO not result.value
             raise UnexpectedProductIdError
 
         result = await api.bridge.node_rf_address()
@@ -351,12 +371,19 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
     ) -> SubentryFlowResult:
         """Bind a new controller."""
         errors: dict[str, str] = {}
+
+        # read model definitions from bridge data
+        config_entry = self._get_entry()
+        coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
+        bridge_id = config_entry.data[CONF_ADDRESS]
+        supp_ctrl = supported_controllers(coordinator, bridge_id, "VMD-")
+
         if user_input is not None:
             self._bind_product_serial = user_input.get(CONF_RF_ADDRESS)
             self._name = user_input.get(CONF_NAME)
             try:
                 product = user_input[CONF_DEVICE]
-                product_id = SUPPORTED_UNITS.get(product)
+                product_id = supp_ctrl.get(product)
                 self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"
@@ -365,7 +392,7 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
         bind_schema = vol.Schema(
             {
                 vol.Required(CONF_NAME): str,
-                vol.Required(CONF_DEVICE): vol.In(SUPPORTED_UNITS.keys()),
+                vol.Required(CONF_DEVICE): vol.In(supp_ctrl.keys()),
                 vol.Optional(CONF_RF_ADDRESS): int,
             }
         )
@@ -507,6 +534,12 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
     ) -> SubentryFlowResult:
         """Bind a new remote or sensor."""
 
+        # read model definitions from bridge data
+        config_entry = self._get_entry()
+        coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
+        bridge_id = config_entry.data[CONF_ADDRESS]
+        supp_acc = supported_controllers(coordinator, bridge_id, "VMN-")
+
         def _show_form(
             bound_controllers: dict[Any, Any], errors: dict[str, str]
         ) -> SubentryFlowResult:
@@ -514,7 +547,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
                 {
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_ADDRESS): vol.In(bound_controllers),
-                    vol.Required(CONF_DEVICE): vol.In(SUPPORTED_ACCESSORIES.keys()),
+                    vol.Required(CONF_DEVICE): vol.In(supp_acc.keys()),
                 }
             )
             return self.async_show_form(
@@ -533,7 +566,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             self._bind_controller_modbus_address = user_input[CONF_ADDRESS]
             try:
                 product = user_input[CONF_DEVICE]
-                product_id = SUPPORTED_ACCESSORIES.get(product)
+                product_id = supp_acc.get(product)
                 self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"

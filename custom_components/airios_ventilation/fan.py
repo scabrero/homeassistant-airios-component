@@ -98,7 +98,7 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    bridge_id = entry.data[CONF_ADDRESS]
     models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
@@ -124,22 +124,21 @@ async def async_setup_entry(
             # lookup node model family by key # compare to pyairios/cli.py
             for key, _id in prids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
+
                 if product_id == _id and key.startswith("VMD-"):
                     # only for controllers. Add is_controller() flag to model.py?
-                    # ValueError: too many values to unpack (expected 2)
-                    # next works fine in pyairios CLI:
-                    # for key, mod in models.items():
-                    # _LOGGER.warning(f"{key} {str(mod.Node)} {mod.product_descr} {mod.pr_id}")
                     _mod = models.get(key)
                     vmd = cast(
                         type[str(_mod) + ".Node"],
                         await coordinator.api.node(modbus_address),
                     )
-                    # result = await vmd.capabilities()
-                    # capabilities = result.value
-                    capabilities = (
-                        VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
-                    )  # DEBUG EBR waiting for pyairios lib reinstall, error
+                    result = await vmd.capabilities()
+                    if result is not None:
+                        capabilities = result.value
+                    else:
+                        capabilities = (
+                            VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
+                        )  # DEBUG EBR waiting for pyairios lib reinstall, silence log error
                     entities.extend(
                         [
                             AiriosFanEntity(

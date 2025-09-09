@@ -128,23 +128,6 @@
         "unknown_product_type": "Binding failed, unknown product ID",
         "bind_failed": "Failed to bind controller. Check the logs."
       }
-    },
-    "import": {
-      "initiate_flow": {
-        "user": "Import..."
-      },
-      "step": {
-        "user": {
-          "title": "Import nodes",
-          "description": "Add controllers already bound to the RF Bridge but not known to HA?",
-          "data": {
-            "reply": "Continue?"
-          }
-        },
-        "do_import_nodes": {
-          "title": "Import in progress"
-        }
-      }
     }
   },
   "options": {

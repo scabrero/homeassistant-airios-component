@@ -65,6 +65,10 @@ class AiriosNumberEntityDescription(NumberEntityDescription):
     set_value_fn: Callable[[ModuleType, float], Awaitable[bool]]
 
 
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-xxx is added that doesn't support the following numbers/functions,
+# or in fact supports more than these: rename or subclass
+
 VMD_PREHEATER_NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
     AiriosNumberEntityDescription(
         key="preheater_setpoint",
@@ -154,8 +158,9 @@ async def async_setup_entry(
         try:
             for key, _id in prids.items():
                 # dict of ids by model_key (names). Can we use node["product_name"] as key?
+
+                # only controllers, add is_controller() to model.py?
                 if product_id == _id and key.startswith("VMD-02"):
-                    # only controllers, add is_controller() to model.py?
                     entities.extend(
                         [
                             AiriosNumberEntity(
@@ -169,9 +174,14 @@ async def async_setup_entry(
                         type[str(_mod) + ".Node"],
                         await coordinator.api.node(modbus_address),
                     )
-                    # result = await vmd.capabilities()
-                    # capabilities = result.value
-                    capabilities = 0  # DEBUG HA startup error EBR waiting for pyairios lib reinstall
+                    result = await vmd.capabilities()
+                    if result is not None:
+                        capabilities = result.value
+                    else:
+                        capabilities = (
+                            VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
+                        )  # DEBUG EBR waiting for pyairios lib reinstall, silence log error
+
                     if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities:
                         entities.extend(
                             [

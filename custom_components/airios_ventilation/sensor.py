@@ -27,7 +27,6 @@ from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.typing import StateType
 from pyairios.constants import (
-    ProductId,
     ResetMode,
     VMDBypassPosition,
     VMDErrorCode,
@@ -161,6 +160,11 @@ BRIDGE_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
 )
 
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-02xxx is added that doesn't support the following sensors,
+# or in fact supports more than these: rename or subclass
+
+# For Siber DF Optima 2, VMD_02RPS78
 VMD_02_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
         key="indoor_air_temperature",
@@ -272,7 +276,8 @@ VMD_02_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
 )
 
-# ClimaRad Ventura V1x
+# ClimaRad Ventura V1x, VMD-07RPS13 (Airios build year 2021, rev 15)
+# To support a V1c etc., add an extra set of sensors (preheat, ...)
 VMD_07_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
         key="indoor_air_temperature",
@@ -341,7 +346,6 @@ VMD_07_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key="bypass_position",
         translation_key="bypass_position",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=PERCENTAGE,
         value_fn=bypass_position_value_fn,
     ),
     AiriosSensorEntityDescription(
@@ -387,12 +391,14 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            # assert (
-            #     self.entity_description.key in device.keys(),
-            #     f"Unsupported sensor key: {self.entity_description}",
-            # )
+
             # KeyError happens when keys come along unknown to the device
-            # assert and report to develop model definition
+            # assert and report to further develop model definition
+            assert (
+                self.entity_description.key in device.keys(),
+                f"Unsupported sensor key: {self.entity_description}. Please create an issue on our GitHub repo",
+            )
+
             result = device[self.entity_description.key]
             _LOGGER.debug(
                 "Node %s, sensor %s, result %s",
@@ -484,7 +490,8 @@ async def async_setup_entry(
                 f"Node {node['product_name']}@{node['slave_id']} has correct int ProductId {node['product_id']}"
             )
             # without next else, Ventura sensors do not load, with the bridge sensors don't
-        else:  # not applicable: if isinstance(node["product_id"], ProductId):
+        else:  # HACK until BRDG in [product_ids]
+            # Not applicable: if isinstance(node["product_id"], ProductId):
             product_id = node["product_id"].value  # 0x0001C849  #
             _LOGGER.debug(
                 f"Extend - Node {node['product_name']}@{node['slave_id']} has old-style ProductId {node['product_id']} instead of {node['product_id'].value}"
@@ -502,12 +509,13 @@ async def async_setup_entry(
             msg = "Failed to fetch product id from node"
             raise ConfigEntryNotReady(msg)
 
+        # TODO(eb): once the updated pyairios includes the bridge node in product_ids, re-enable:
         # if (
         #     product_id == coordinator.data.nodes[bridge_id]["product_id"]
         #     or product_id
         #     == "BRDG-02R13"  # or product_id.value == 0x0001C849  # HACK EBR to see enumval
         # ):
-        #     # "BRDG-02R13":  # ProductId.BRDG_02R13
+        #     # "BRDG-02R13":  # ProductId.BRDG_02R13 < messy ATM
         #     _LOGGER.debug(
         #         f"Sensor setup for BRDG- node {node['product_name']}@{node['slave_id']} _id {product_id}"
         #     )
@@ -527,16 +535,6 @@ async def async_setup_entry(
             )
             if product_id == _id:
                 _LOGGER.debug("Sensor setup - product_id match")
-                # if key.startswith("VMD-"):
-                # only controllers, add is_controller() to model.py?
-                #     entities.extend(
-                #         [
-                #             AiriosSensorEntity(
-                #                 description, coordinator, node, via_config_entry, subentry
-                #             )
-                #             for description in VMD_SENSOR_ENTITIES
-                #         ]
-                #     )
                 if key.startswith("VMD-02"):
                     # only controllers, add is_controller() to model.py?
                     _LOGGER.debug(
