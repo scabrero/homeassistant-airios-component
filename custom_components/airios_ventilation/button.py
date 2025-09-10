@@ -16,6 +16,7 @@ from homeassistant.components.button import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from pyairios import AiriosException
+from pyairios.constants import VMDRequestedVentilationSpeed
 
 from .entity import AiriosEntity
 
@@ -43,12 +44,13 @@ async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool
             return await vmd.filter_reset()
     return False
 
-async def _base_vent_toggle(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
+
+async def _temp_boost(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
     for key, _id in models.items():
         if _id == node.node_product_id():
             _mod = models.get(key)
             vmd = cast(type[str(_mod) + ".Node"], node)
-            return await vmd.base_vent_toggle()
+            return await vmd.set_ventilation_speed(VMDRequestedVentilationSpeed.HIGH)
     return False
 
 
@@ -74,9 +76,9 @@ VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
 
 VMD_07_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
     AiriosButtonEntityDescription(
-        key="base_vent_toggle",
-        translation_key="base_vent_toggle",
-        press_fn=_base_vent_toggle,
+        key="temp_boost",
+        translation_key="temp_boost",
+        press_fn=_temp_boost,
     ),
 )
 

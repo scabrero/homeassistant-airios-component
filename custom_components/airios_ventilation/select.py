@@ -90,6 +90,7 @@ VMD_07_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
 models: dict[str, ModuleType]
 prids: dict[str, int]
 
+
 async def async_setup_entry(
     hass: HomeAssistant,  # noqa: ARG001
     entry: ConfigEntry,
@@ -167,16 +168,15 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         ret = 10  # VMDOffOnMode.ERROR
         try:
             for key, _id in prids.items():
-                # dict of ids by model_key (names).
+                # dict of ids by model_key (names)
+                _mod = models.get(key)
                 if product_id == _id:
-                    if key == "VMD-02RPS78":  # only 1 select per model? lookup by
-                        _mod = models.get(key)
+                    if key == "VMD-02RPS78":
                         vmd = cast(type[str(_mod) + ".Node"], self.node)
                         if self.entity_description.key == "bypass_mode":
                             bypass_mode = NAME_TO_BYPASS_MODE[option]
                             ret = await vmd.set_bypass_mode(bypass_mode)
                     elif key == "VMD-07RPS13":
-                        _mod = models.get(key)
                         vmd = cast(type[str(_mod) + ".Node"], self.node)
                         if self.entity_description.key == "base_vent_enabled":
                             new_state = NAME_TO_OFFON_MODE[option]

@@ -219,8 +219,8 @@
       "filter_reset": {
         "name": "Reset filter counter"
       },
-      "base_vent_toggle": {
-        "name": "Toggle base vent enabled"
+      "temp_boost": {
+        "name": "Boost"
       }
     },
     "sensor": {
