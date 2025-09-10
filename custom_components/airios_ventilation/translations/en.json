@@ -153,8 +153,15 @@
           "auto": "Auto",
           "error": "Error"
         }
-      }
-    },
+      },
+      "base_vent_enabled": {
+        "name": "Base ventilation",
+        "state": {
+          "off": "Off",
+          "on": "Active",
+          "error": "Error"
+        }
+      }    },
     "fan": {
       "ventilation_speed": {
         "name": "Ventilation speed",
@@ -211,6 +218,9 @@
     "button": {
       "filter_reset": {
         "name": "Reset filter counter"
+      },
+      "base_vent_toggle": {
+        "name": "Toggle base vent enabled"
       }
     },
     "sensor": {

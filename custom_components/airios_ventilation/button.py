@@ -43,6 +43,14 @@ async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool
             return await vmd.filter_reset()
     return False
 
+async def _base_vent_toggle(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
+    for key, _id in models.items():
+        if _id == node.node_product_id():
+            _mod = models.get(key)
+            vmd = cast(type[str(_mod) + ".Node"], node)
+            return await vmd.base_vent_toggle()
+    return False
+
 
 @dataclass(frozen=True, kw_only=True)
 class AiriosButtonEntityDescription(ButtonEntityDescription):
@@ -61,6 +69,14 @@ VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
         translation_key="filter_reset",
         device_class=ButtonDeviceClass.RESTART,
         press_fn=_filter_reset,
+    ),
+)
+
+VMD_07_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
+    AiriosButtonEntityDescription(
+        key="base_vent_toggle",
+        translation_key="base_vent_toggle",
+        press_fn=_base_vent_toggle,
     ),
 )
 
@@ -102,13 +118,23 @@ async def async_setup_entry(
         for key, _id in prids.items():
             # dict of ids by model_key (names). Can we use node["product_name"] as key?
             if product_id == _id and key.startswith("VMD-"):
-                # TODO check if it supports reset_filter
+                # TODO check if model supports reset_filter
                 entities.extend(
                     [
                         AiriosButtonEntity(
                             description, coordinator, node, via, subentry
                         )
                         for description in VMD_BUTTON_ENTITIES
+                    ]
+                )
+            elif product_id == _id and key == "VMD-07RPS13":
+                # Ventura V1
+                entities.extend(
+                    [
+                        AiriosButtonEntity(
+                            description, coordinator, node, via, subentry
+                        )
+                        for description in VMD_07_BUTTON_ENTITIES
                     ]
                 )
         async_add_entities(entities, config_subentry_id=subentry_id)
