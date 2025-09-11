@@ -11,9 +11,10 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios import VMD02RPS78, ProductId
+from pyairios import ProductId
 from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
+from pyairios.models.vmd_02rps78 import VMD02RPS78
 
 from .entity import AiriosEntity
 

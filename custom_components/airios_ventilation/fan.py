@@ -15,12 +15,13 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
 from homeassistant.helpers import entity_platform
-from pyairios import VMD02RPS78, AiriosException, ProductId
+from pyairios import AiriosException, ProductId
 from pyairios.constants import (
     VMDCapabilities,
     VMDRequestedVentilationSpeed,
     VMDVentilationSpeed,
 )
+from pyairios.models.vmd_02rps78 import VMD02RPS78
 
 from .entity import AiriosEntity
 from .services import (
