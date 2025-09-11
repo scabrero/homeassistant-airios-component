@@ -36,22 +36,19 @@ _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 0
 
 
+# TODO refactor the next set of calls, passing in filter_reset() etc.
 async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
-    for key, _id in models.items():
-        if _id == node.node_product_id():
-            _mod = models.get(key)
-            vmd = cast(type[str(_mod) + ".Node"], node)
-            return await vmd.filter_reset()
-    return False
+    _name = await node.node_product_name()
+    _mod = models.get(_name.value)
+    vmd = cast(type[str(_mod) + ".Node"], node)
+    return await vmd.filter_reset()
 
 
 async def _temp_boost(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
-    for key, _id in models.items():
-        if _id == node.node_product_id():
-            _mod = models.get(key)
-            vmd = cast(type[str(_mod) + ".Node"], node)
-            return await vmd.set_ventilation_speed(VMDRequestedVentilationSpeed.HIGH)
-    return False
+    _name = await node.node_product_name()
+    # _mod = models.get(_name.value)
+    vmd = cast(type[models[_name.value].Node], node)  # type[str(_mod) + ".Node"
+    return await vmd.set_ventilation_speed(VMDRequestedVentilationSpeed.HIGH)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -97,7 +94,6 @@ async def async_setup_entry(
     # fetch model definitions from bridge data
     bridge_id = entry.data[CONF_ADDRESS]
     models = coordinator.data.nodes[bridge_id]["models"]  # added in pyairios data_model
-    prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -111,34 +107,29 @@ async def async_setup_entry(
                 via = entry
 
         entities: list[AiriosButtonEntity] = []
+        product_name = node["product_name"].value
 
-        product_id = node["product_id"]
-        if product_id is None:
-            msg = "Failed to fetch product id from node"
+        if product_name is None:
+            msg = "Failed to fetch product name from node"
             raise ConfigEntryNotReady(msg)
 
-        for key, _id in prids.items():
-            # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            if product_id == _id and key.startswith("VMD-"):
-                # TODO check if model supports reset_filter
-                entities.extend(
-                    [
-                        AiriosButtonEntity(
-                            description, coordinator, node, via, subentry
-                        )
-                        for description in VMD_BUTTON_ENTITIES
-                    ]
-                )
-            elif product_id == _id and key == "VMD-07RPS13":
-                # Ventura V1
-                entities.extend(
-                    [
-                        AiriosButtonEntity(
-                            description, coordinator, node, via, subentry
-                        )
-                        for description in VMD_07_BUTTON_ENTITIES
-                    ]
-                )
+        if product_name.startswith("VMD-"):
+            # TODO check if model supports reset_filter
+            entities.extend(
+                [
+                    AiriosButtonEntity(description, coordinator, node, via, subentry)
+                    for description in VMD_BUTTON_ENTITIES
+                ]
+            )
+
+        if product_name == "VMD-07RPS13":
+            # Ventura V1
+            entities.extend(
+                [
+                    AiriosButtonEntity(description, coordinator, node, via, subentry)
+                    for description in VMD_07_BUTTON_ENTITIES
+                ]
+            )
         async_add_entities(entities, config_subentry_id=subentry_id)
 
 
@@ -151,16 +142,19 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
         self,
         description: AiriosButtonEntityDescription,
         coordinator: AiriosDataUpdateCoordinator,
-        node: AiriosNodeData,
+        node_data: AiriosNodeData,
         via_config_entry: ConfigEntry | None,
         subentry: ConfigSubentry | None,
     ) -> None:
         """Initialize the Airios button entity."""
-        super().__init__(description.key, coordinator, node, via_config_entry, subentry)
+        super().__init__(
+            description.key, coordinator, node_data, via_config_entry, subentry
+        )
         self.entity_description = description
 
     async def async_press(self) -> None:
         """Handle button press."""
+        global models
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
             node = await self.api().node(self.modbus_address)

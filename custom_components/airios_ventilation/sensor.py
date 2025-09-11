@@ -392,13 +392,6 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
 
-            # KeyError happens when keys come along unknown to the device
-            # assert and report to further develop model definition
-            assert (
-                self.entity_description.key in device.keys(),
-                f"Unsupported sensor key: {self.entity_description}. Please create an issue on our GitHub repo",
-            )
-
             result = device[self.entity_description.key]
             _LOGGER.debug(
                 "Node %s, sensor %s, result %s",
@@ -465,10 +458,6 @@ async def async_setup_entry(
     """Set up the sensors."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
-    # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]
-    prids = coordinator.data.nodes[bridge_id]["product_ids"]
-
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
         subentry_id = None
@@ -481,117 +470,64 @@ async def async_setup_entry(
                 via_config_entry = entry
 
         entities: list[AiriosSensorEntity] = []
+        product_name = node["product_name"].value
 
-        product_id = None
+        if product_name is None:
+            msg = "Failed to fetch product name from node"
+            raise ConfigEntryNotReady(msg)
 
-        if isinstance(node["product_id"], int):  # debug while not BRDG correct?
-            product_id = node["product_id"]  # expected/correct
+        if product_name.startswith("BRDG-"):
             _LOGGER.debug(
-                f"Node {node['product_name']}@{node['slave_id']} has correct int ProductId {node['product_id']}"
-            )
-            # without next else, Ventura sensors do not load, with the bridge sensors don't
-        else:  # HACK until BRDG in [product_ids]
-            # Not applicable: if isinstance(node["product_id"], ProductId):
-            product_id = node["product_id"].value  # 0x0001C849  #
-            _LOGGER.debug(
-                f"Extend - Node {node['product_name']}@{node['slave_id']} has old-style ProductId {node['product_id']} instead of {node['product_id'].value}"
+                f"Sensor setup for BRDG- node {node['product_name']}@{node['slave_id']}"
             )
             entities.extend(
                 [
                     AiriosSensorEntity(
-                        description, coordinator, node, via_config_entry, subentry
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-
-        if product_id is None:
-            msg = "Failed to fetch product id from node"
-            raise ConfigEntryNotReady(msg)
-
-        # TODO(eb): once the updated pyairios includes the bridge node in product_ids, re-enable:
-        # if (
-        #     product_id == coordinator.data.nodes[bridge_id]["product_id"]
-        #     or product_id
-        #     == "BRDG-02R13"  # or product_id.value == 0x0001C849  # HACK EBR to see enumval
-        # ):
-        #     # "BRDG-02R13":  # ProductId.BRDG_02R13 < messy ATM
-        #     _LOGGER.debug(
-        #         f"Sensor setup for BRDG- node {node['product_name']}@{node['slave_id']} _id {product_id}"
-        #     )
-        #     entities.extend(
-        #         [
-        #             AiriosSensorEntity(
-        #                 description, coordinator, node, via_config_entry, subentry
-        #             )
-        #             for description in BRIDGE_SENSOR_ENTITIES
-        #         ]
-        #     )
-
-        for key, _id in prids.items():
-            # dict of id's by model_key (names). Can we use node["product_name"] as key?
+        elif product_name.startswith("VMD-02"):
+            # only controllers, add is_controller() to model.py?
             _LOGGER.debug(
-                f"Sensor setup - checking node {node['product_name']}@{node['slave_id']}/id {product_id} against prids {key}, {_id}"
+                f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
             )
-            if product_id == _id:
-                _LOGGER.debug("Sensor setup - product_id match")
-                if key.startswith("VMD-02"):
-                    # only controllers, add is_controller() to model.py?
-                    _LOGGER.debug(
-                        f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
+            entities.extend(
+                [
+                    AiriosSensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
-                    entities.extend(
-                        [
-                            AiriosSensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in VMD_02_SENSOR_ENTITIES
-                        ]
+                    for description in VMD_02_SENSOR_ENTITIES
+                ]
+            )
+        if product_name.startswith("VMD-07"):
+            # only controllers, add is_controller() to model.py?
+            _LOGGER.debug(
+                f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
+            )
+            entities.extend(
+                [
+                    AiriosSensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
-                if key.startswith("VMD-07"):
-                    # only controllers, add is_controller() to model.py?
-                    _LOGGER.debug(
-                        f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
-                    )
-                    entities.extend(
-                        [
-                            AiriosSensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in VMD_07_SENSOR_ENTITIES
-                        ]
-                    )
-                elif key.startswith("BRDG-"):
-                    # second chance for sensors on the BRDG - remove above when it appears in nodes()
-                    _LOGGER.debug(
-                        f"Sensor setup for BRDG- node {node['product_name']}@{node['slave_id']}"
-                    )
-                    entities.extend(
-                        [
-                            AiriosSensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in BRIDGE_SENSOR_ENTITIES
-                        ]
-                    )
-                else:
-                    _LOGGER.debug(
-                        f"Could not match node {node['product_name']}@{node['slave_id']} by key '{key}'"
-                    )
-            else:
-                _LOGGER.debug(f"Skipping Sensor setup for node {key}")
+                    for description in VMD_07_SENSOR_ENTITIES
+                ]
+            )
+        else:
+            _LOGGER.debug(f"Skipping Sensor setup for node {product_name}")
 
         async_add_entities(entities, config_subentry_id=subentry_id)
 

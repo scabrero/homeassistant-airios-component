@@ -155,7 +155,7 @@ VMD_07_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] =
     ),
     AiriosBinarySensorEntityDescription(
         key="basic_ventilation_enable",
-        translation_key="base_vent_enabled",
+        translation_key="basic_vent_enabled",
         device_class=BinarySensorDeviceClass.RUNNING,
     ),
 )
@@ -203,61 +203,53 @@ async def async_setup_entry(
             )
             for description in NODE_BINARY_SENSOR_ENTITIES
         ]
-        product_id = node["product_id"]
-        if product_id is None:
-            msg = "Failed to fetch product id from node"
+        product_name = node["product_name"].value
+        if product_name is None:
+            msg = "Failed to fetch product name from node"
             raise ConfigEntryNotReady(msg)
 
-        for key, _id in prids.items():
-            # dict of ids by model_key (names). Can we use node["product_name"] as key?
-            _LOGGER.debug(
-                f"Binary Sensor setup - checking node {product_id} against prid {key}, {_id}"
+        # only controllers, add is_controller() in pyairios?
+        if product_name.startswith("VMD-02"):
+            entities.extend(
+                [
+                    AiriosBinarySensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
+                    )
+                    for description in VMD_02_BINARY_SENSOR_ENTITIES
+                ]
             )
-            if product_id == _id:
-                if key.startswith(
-                    "VMD-02"
-                ):  # only controllers, add is_controller() in pyairios?
-                    entities.extend(
-                        [
-                            AiriosBinarySensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in VMD_02_BINARY_SENSOR_ENTITIES
-                        ]
+        elif product_name.startswith("VMD-07"):
+            entities.extend(
+                [
+                    AiriosBinarySensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
-                elif key.startswith(
-                    "VMD-07"
-                ):  # only controllers, add is_controller() in pyairios?
-                    entities.extend(
-                        [
-                            AiriosBinarySensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in VMD_07_BINARY_SENSOR_ENTITIES
-                            # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
-                        ]
+                    for description in VMD_07_BINARY_SENSOR_ENTITIES
+                    # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
+                ]
+            )
+        elif product_name.startswith("VMN-"):
+            entities.extend(
+                [
+                    AiriosBinarySensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
-                elif key.startswith("VMN-"):
-                    entities.extend(
-                        [
-                            AiriosBinarySensorEntity(
-                                description,
-                                coordinator,
-                                node,
-                                via_config_entry,
-                                subentry,
-                            )
-                            for description in VMN_BINARY_SENSOR_ENTITIES
-                        ]
-                    )
-                else:
-                    _LOGGER.debug(f"Skipping binary_sensor setup for node {key}")
+                    for description in VMN_BINARY_SENSOR_ENTITIES
+                ]
+            )
+        else:
+            _LOGGER.debug(f"Skipping binary_sensor setup for node {product_name}")
+
         async_add_entities(entities, config_subentry_id=subentry_id)

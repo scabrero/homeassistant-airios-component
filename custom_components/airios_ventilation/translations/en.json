@@ -154,7 +154,7 @@
           "error": "Error"
         }
       },
-      "base_vent_enabled": {
+      "basic_vent_enable_sel": {
         "name": "Base ventilation",
         "state": {
           "off": "Off",
@@ -207,7 +207,7 @@
       "defrost": {
         "name": "Defrost"
       },
-      "base_vent_enabled": {
+      "basic_vent_enabled": {
         "name": "Base ventilation enabled",
         "state": {
           "off": "Off",
