@@ -476,10 +476,10 @@ async def async_setup_entry(
             msg = "Failed to fetch product name from node"
             raise ConfigEntryNotReady(msg)
 
+        _LOGGER.debug(
+            f"Sensor setup for node {node['product_name']}@{node['slave_id']}"
+        )
         if product_name.startswith("BRDG-"):
-            _LOGGER.debug(
-                f"Sensor setup for BRDG- node {node['product_name']}@{node['slave_id']}"
-            )
             entities.extend(
                 [
                     AiriosSensorEntity(
@@ -494,9 +494,6 @@ async def async_setup_entry(
             )
         elif product_name.startswith("VMD-02"):
             # only controllers, add is_controller() to model.py?
-            _LOGGER.debug(
-                f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
-            )
             entities.extend(
                 [
                     AiriosSensorEntity(
@@ -509,11 +506,8 @@ async def async_setup_entry(
                     for description in VMD_02_SENSOR_ENTITIES
                 ]
             )
-        if product_name.startswith("VMD-07"):
+        elif product_name.startswith("VMD-07"):
             # only controllers, add is_controller() to model.py?
-            _LOGGER.debug(
-                f"Sensor setup for VMD-02- node {node['product_name']}@{node['slave_id']}"
-            )
             entities.extend(
                 [
                     AiriosSensorEntity(
@@ -527,7 +521,7 @@ async def async_setup_entry(
                 ]
             )
         else:
-            _LOGGER.debug(f"Skipping Sensor setup for node {product_name}")
+            _LOGGER.debug(f"Skipping Sensor setup for node {product_name}@{node['slave_id']}")
 
         async_add_entities(entities, config_subentry_id=subentry_id)
 

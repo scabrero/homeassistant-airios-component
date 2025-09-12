@@ -158,7 +158,7 @@
         "name": "Base ventilation",
         "state": {
           "off": "Off",
-          "on": "Active",
+          "on": "On",
           "error": "Error"
         }
       }    },
