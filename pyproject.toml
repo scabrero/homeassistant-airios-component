@@ -1,0 +1,67 @@
+[project]
+name = "homeassistant-airios-component"
+description = "Home Assistant component for Airios ventilation systems"
+readme = "README.md"
+
+authors = [
+  { name = "Samuel Cabrero", email = "samuel@orica.es" },
+]
+license = { file="LICENSE" }
+keywords = ["Airios", "Siber", "ventilation", "heat-recovery", "homeassistant", "home-assistant"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Home Automation",
+    "Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Operating System :: OS Independent",
+]
+
+dynamic = ["version"]
+
+requires-python = ">= 3.13.7"
+
+dependencies = [
+  "homeassistant>=2025.10.0",
+]
+
+[dependency-groups]
+typing = ["mypy", "pyright"]
+linting = ["pylint", "ruff"]
+tests = ["pytest"]
+dev = [{include-group = "typing"}, {include-group = "linting"}, {include-group = "tests"}, "pre-commit"]
+
+[project.urls]
+Homepage = "https://github.com/scabrero/homeassistant-airios-component"
+Repository = "https://github.com/scabrero/homeassistant-airios-component.git"
+Issues = "https://github.com/scabrero/homeassistant-airios-component/issues"
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/doc",
+  "/scripts"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["custom_components/airios_ventilation"]
+
+[tool.mypy]
+python_version = "3.13"
+pretty = true
+follow_imports = "silent"
+ignore_missing_imports = true
+warn_incomplete_stub = true
+warn_redundant_casts = true
+warn_unused_configs = true
+
+[tool.ruff]
+line-length = 100
