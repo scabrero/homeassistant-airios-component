@@ -14,7 +14,6 @@ from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
 from pyairios import ProductId
 from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
-from pyairios.models.vmd_02rps78 import VMD02RPS78
 
 from .entity import AiriosEntity
 
@@ -24,6 +23,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
+    from pyairios.models.vmd_02rps78 import VMD02RPS78
 
     from .coordinator import AiriosDataUpdateCoordinator
 

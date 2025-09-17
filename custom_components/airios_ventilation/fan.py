@@ -21,7 +21,6 @@ from pyairios.constants import (
     VMDRequestedVentilationSpeed,
     VMDVentilationSpeed,
 )
-from pyairios.models.vmd_02rps78 import VMD02RPS78
 
 from .entity import AiriosEntity
 from .services import (
@@ -39,6 +38,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
+    from pyairios.models.vmd_02rps78 import VMD02RPS78
 
     from . import AiriosConfigEntry
     from .coordinator import AiriosDataUpdateCoordinator
