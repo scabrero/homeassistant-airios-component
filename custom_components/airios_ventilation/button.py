@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from types import ModuleType
 from typing import cast
 
 from homeassistant.components.button import (
@@ -22,12 +21,12 @@ from .entity import AiriosEntity
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
+    from types import ModuleType
 
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
-    from pyairios.models.vmd_02rps78 import VMD02RPS78
     from pyairios.node import AiriosNode
 
     from .coordinator import AiriosDataUpdateCoordinator
@@ -37,18 +36,18 @@ _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 0
 
 
-# TODO refactor the next set of calls, passing in filter_reset() etc.
+# refactor the next set of calls, passing in filter_reset() etc.
+
+
 async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
     _name = await node.node_product_name()
-    _mod = models.get(_name.value)
-    vmd = cast(type[str(_mod) + ".Node"], node)
+    vmd = cast(type["models[_name.value].Node"], node)
     return await vmd.filter_reset()
 
 
 async def _temp_boost(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
     _name = await node.node_product_name()
-    # _mod = models.get(_name.value)
-    vmd = cast(type[models[_name.value].Node], node)  # type[str(_mod) + ".Node"
+    vmd = cast(type["models[_name.value].Node"], node)
     return await vmd.set_ventilation_speed(VMDRequestedVentilationSpeed.HIGH)
 
 
@@ -60,8 +59,8 @@ class AiriosButtonEntityDescription(ButtonEntityDescription):
 
 
 # These tuples must match the NodeData defined in pyairios models/
-# When a new device VMD-xxx is added that doesn't support the following buttons/functions,
-# or in fact supports more than these: rename or subclass
+# When a new device VMD-xxx is added that doesn't support the following
+# buttons/functions, or in fact supports more than these: rename or subclass
 
 VMD_BUTTON_ENTITIES: tuple[AiriosButtonEntityDescription, ...] = (
     AiriosButtonEntityDescription(
@@ -89,7 +88,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the button platform."""
-    global models
+    global models  # noqa PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
@@ -115,7 +114,7 @@ async def async_setup_entry(
             raise ConfigEntryNotReady(msg)
 
         if product_name.startswith("VMD-"):
-            # TODO check if model supports reset_filter
+            # check if model supports reset_filter
             entities.extend(
                 [
                     AiriosButtonEntity(description, coordinator, node, via, subentry)
@@ -155,7 +154,6 @@ class AiriosButtonEntity(AiriosEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle button press."""
-        global models
         _LOGGER.debug("Button %s pressed", self.entity_description.name)
         try:
             node = await self.api().node(self.modbus_address)

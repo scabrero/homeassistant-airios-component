@@ -39,7 +39,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         super().__init__(coordinator)
 
         self.modbus_address = node["slave_id"]
-        # in pymodbus>=3.11 keyword "device_id". property name not refactored in pyairios yet
+        # in pymodbus>=3.11 keyword "device_id". prop name not refactored in pyairios
 
         if node["rf_address"] is None or node["rf_address"].value is None:
             msg = "Node RF address not available"
@@ -60,11 +60,6 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             ]  # BRDG ProductId slipping through despite refactor
         else:
             product_id = node["product_id"].value
-        # without .value get TypeError: unsupported format string "BRDG-02R13" (only)
-        # but with .value get error: not for int (bin.sensor, number) 2025-09-07 EBR)
-        # plus AssertionError: Wrong format for product_id: BRDG-02R13
-        # confirm we run latest stable pyairios version??
-        assert isinstance(product_id, int), f"Wrong format for product_id: {product_id}"
 
         if node["sw_version"] is None or node["sw_version"].value is None:
             msg = "Node software version not available"

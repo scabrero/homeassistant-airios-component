@@ -48,7 +48,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
     from pyairios.data_model import AiriosNodeData
-    from pyairios.models.brdg_02r13 import BRDG02R13  # noqa: F401
+    from pyairios.models.brdg_02r13 import BRDG02R13
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -437,7 +437,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
 
     @final
     async def async_factory_reset(self) -> bool:
-        """Factory reset the bridge."""
+        """Factory-reset the bridge."""
         node = cast("BRDG02R13", await self.api().node(self.modbus_address))
         _LOGGER.info("Factory reset node %s", str(node))
         try:
@@ -477,7 +477,7 @@ async def async_setup_entry(
             raise ConfigEntryNotReady(msg)
 
         _LOGGER.debug(
-            f"Sensor setup for node {node['product_name']}@{node['slave_id']}"
+            "Sensor setup for node %s@%s", node["product_name"], node["slave_id"]
         )
         if product_name.startswith("BRDG-"):
             entities.extend(
@@ -521,7 +521,9 @@ async def async_setup_entry(
                 ]
             )
         else:
-            _LOGGER.debug(f"Skipping Sensor setup for node {product_name}@{node['slave_id']}")
+            _LOGGER.debug(
+                "Skipping Sensor setup for node %s@%s", product_name, node["slave_id"]
+            )
 
         async_add_entities(entities, config_subentry_id=subentry_id)
 

@@ -59,14 +59,16 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def supported_controllers(
-    coordinator, bridge_address: int, prefix: str
+    coordinator: AiriosDataUpdateCoordinator, bridge_address: int, prefix: str
 ) -> dict[str, int]:
-    """Get supported models to use in config_flow BindController.
+    """
+    Get supported models to use in config_flow BindController.
     :param coordinator: Coordinator to Airios lib
     :param bridge_address: the bridge node address
-    :param prefix: filter for device types (TODO use model property)
+    :param prefix: filter for device types (use model property?)
     :return: dict of supported models matching prefix
     """
+
     prids = coordinator.data.nodes[bridge_address]["product_ids"]
     descr = coordinator.data.nodes[bridge_address]["model_descriptions"]
     res = {}
@@ -254,7 +256,8 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_validate_bridge(self, api: Airios) -> int:
         result = await api.bridge.node_product_id()
-        if result != 0x0001C849:  # ProductId.BRDG_02R13:  # TODO not result.value
+        BRDG_ID = 0x0001C849
+        if result != BRDG_ID:  # ProductId.BRDG_02R13:
             raise UnexpectedProductIdError
 
         result = await api.bridge.node_rf_address()
@@ -533,7 +536,6 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         """Bind a new remote or sensor."""
-
         # read model definitions from bridge data
         config_entry = self._get_entry()
         coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data

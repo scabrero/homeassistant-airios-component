@@ -131,8 +131,8 @@ NODE_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
 )
 
 # These tuples must match the NodeData defined in pyairios models/
-# When a new device VMD-02xxx is added that doesn't support the following binary sensors,
-# or in fact supports more than these: rename or subclass
+# When a new device VMD-02xxx is added that doesn't support the following
+# binary sensors, or in fact supports more than these: rename or subclass
 
 VMD_02_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     AiriosBinarySensorEntityDescription(
@@ -180,7 +180,6 @@ async def async_setup_entry(
 
     # fetch model definitions from bridge data
     bridge_id = entry.data[CONF_ADDRESS]
-    prids = coordinator.data.nodes[bridge_id]["product_ids"]
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -233,7 +232,8 @@ async def async_setup_entry(
                         subentry,
                     )
                     for description in VMD_07_BINARY_SENSOR_ENTITIES
-                    # TODO first check if model supports this: if binary_sensor coordinator.api().etc...
+                    # first check if model supports this:
+                    # if binary_sensor coordinator.api().etc...
                 ]
             )
         elif product_name.startswith("VMN-"):
@@ -250,6 +250,6 @@ async def async_setup_entry(
                 ]
             )
         else:
-            _LOGGER.debug(f"Skipping binary_sensor setup for node {product_name}")
+            _LOGGER.debug("Skipping binary_sensor setup for node %s", product_name)
 
         async_add_entities(entities, config_subentry_id=subentry_id)

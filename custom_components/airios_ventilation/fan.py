@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import typing
-from types import ModuleType
 from typing import Any, cast, final
 
 from homeassistant.components.fan import (
@@ -39,6 +38,8 @@ from .services import (
 )
 
 if typing.TYPE_CHECKING:
+    from types import ModuleType
+
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
@@ -94,7 +95,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the fan entities."""
-    global models
+    global models  # noqa PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
@@ -123,22 +124,21 @@ async def async_setup_entry(
         try:
             # lookup node model family by key # compare to pyairios/cli.py
             for key, _id in prids.items():
-                # dict of ids by model_key (names). Can we use node["product_name"] as key?
+                # dict of ids by model_key (names).
+                # Can we use node["product_name"] as key?
 
                 if product_id == _id and key.startswith("VMD-"):
-                    # only for controllers. Add is_controller() flag to model.py?
-                    _mod = models.get(key)
+                    # only controllers. Add is_controller() flag to model.py
+                    _nod = models.get(key).Node
                     vmd = cast(
-                        type[str(_mod) + ".Node"],
+                        type[_nod],
                         await coordinator.api.node(modbus_address),
                     )
                     result = await vmd.capabilities()
                     if result is not None:
                         capabilities = result.value
                     else:
-                        capabilities = (
-                            VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
-                        )  # DEBUG EBR waiting for pyairios lib reinstall, silence log error
+                        capabilities = VMDCapabilities.NO_CAPABLE
                     entities.extend(
                         [
                             AiriosFanEntity(
@@ -472,8 +472,8 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
             raise HomeAssistantError(msg)
         vmd_speed = PRESET_TO_VMD_SPEED[preset_mode]
         node = cast("self._node_class", await self.api().node(self.modbus_address))
-        # result = await node.capabilities()
-        caps = 0  # EBR debug was: result.value
+        result = await node.capabilities()
+        caps = result.value
         if VMDCapabilities.TIMER_CAPABLE not in caps:
             msg = f"Device {node!s} does not support preset temporary override"
             raise HomeAssistantError(msg)

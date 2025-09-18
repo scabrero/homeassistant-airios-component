@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from types import ModuleType
 from typing import cast
 
 from homeassistant.components.number import (
@@ -24,6 +23,7 @@ from .entity import AiriosEntity
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
+    from types import ModuleType
 
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -66,8 +66,8 @@ class AiriosNumberEntityDescription(NumberEntityDescription):
 
 
 # These tuples must match the NodeData defined in pyairios models/
-# When a new device VMD-xxx is added that doesn't support the following numbers/functions,
-# or in fact supports more than these: rename or subclass
+# When a new device VMD-xxx is added that doesn't support the following
+# numbers/functions, or in fact supports more than these: rename or subclass
 
 VMD_PREHEATER_NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
     AiriosNumberEntityDescription(
@@ -129,13 +129,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up the number entities."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
-    api = coordinator.api
 
     # fetch model definitions from bridge data
     bridge_id = entry.data[CONF_ADDRESS]
     models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
     prids = coordinator.data.nodes[bridge_id]["product_ids"]
-    # also: descriptions
 
     for modbus_address, node_info in coordinator.data.nodes.items():
         # Find matching subentry
@@ -157,7 +155,7 @@ async def async_setup_entry(
 
         try:
             for key, _id in prids.items():
-                # dict of ids by model_key (names). Can we use node["product_name"] as key?
+                # dict of ids by model_key (names)
 
                 # only controllers, add is_controller() to model.py?
                 if product_id == _id and key.startswith("VMD-02"):
@@ -169,18 +167,16 @@ async def async_setup_entry(
                             for description in VMD_FREEVENT_NUMBER_ENTITIES
                         ]
                     )
-                    _mod = models.get(key)
+                    _nod = models[key].Node
                     vmd = cast(
-                        type[str(_mod) + ".Node"],
+                        "_nod",
                         await coordinator.api.node(modbus_address),
                     )
                     result = await vmd.capabilities()
                     if result is not None:
                         capabilities = result.value
                     else:
-                        capabilities = (
-                            VMDCapabilities.OFF_CAPABLE  # NO_CAPABLE
-                        )  # DEBUG EBR waiting for pyairios lib reinstall, silence log error
+                        capabilities = VMDCapabilities.NO_CAPABLE
 
                     if VMDCapabilities.PRE_HEATER_AVAILABLE in capabilities:
                         entities.extend(
@@ -222,8 +218,8 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
         models = self.coordinator.api().bridge.models
         for key, _id in models.items():
             if _id == node.node_product_id():
-                _mod = models.get(key)
-                vmd = cast(type[str(_mod) + ".Node"], node)
+                _nod = models[key].Node
+                vmd = cast("_nod", node)
                 return await self.entity_description.set_value_fn(vmd, value)
         return False
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 
-# from concurrent.futures import ThreadPoolExecutor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ADDRESS,

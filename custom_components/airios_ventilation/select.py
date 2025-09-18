@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from types import ModuleType
 from typing import Any, cast
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
@@ -21,6 +20,7 @@ from .entity import AiriosEntity
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
+    from types import ModuleType
 
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -69,8 +69,8 @@ def off_on_value_fn(v: VMDBypassMode) -> str | None:
 
 # These tuples must match the NodeData defined in pyairios models/
 # thus the NodeData must contain a key named like the Description key defined here
-# When a new device/rev VMD-02RPS78 is added that doesn't support the following selects/functions,
-# or in fact supports more than these: rename or subclass
+# When a new device/rev VMD-02RPS78 is added that doesn't support the following
+# selects/functions, or in fact supports more than these: rename or subclass
 
 VMD_02_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
     AiriosSelectEntityDescription(  # only for vmd_02rps78
@@ -99,7 +99,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the selectors."""
-    global models
+    global models  # noqa PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
@@ -167,14 +167,14 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         product_name = self.node["product_name"].value
         ret = 10  # VMDOffOnMode.ERROR
         try:
-            _mod = models.get(product_name)
+            _nod = models.get(product_name).Node
             if product_name == "VMD-02RPS78":
-                vmd = cast(type[str(_mod) + ".Node"], self.node)
+                vmd = cast("_nod", self.node)
                 if self.entity_description.key == "bypass_mode":
                     bypass_mode = NAME_TO_BYPASS_MODE[option]
                     ret = await vmd.set_bypass_mode(bypass_mode)
             elif product_name == "VMD-07RPS13":
-                vmd = cast(type[str(_mod) + ".Node"], self.node)
+                vmd = cast("_nod", self.node)
                 if self.entity_description.key == "basic_ventilation_enable":
                     new_state = NAME_TO_OFFON_MODE[option]
                     ret = await vmd.set_basic_vent_enable(new_state)
