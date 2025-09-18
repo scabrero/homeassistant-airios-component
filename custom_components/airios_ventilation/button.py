@@ -27,6 +27,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
+    from pyairios.models.vmd_02rps78 import VMD02RPS78
     from pyairios.node import AiriosNode
 
     from .coordinator import AiriosDataUpdateCoordinator

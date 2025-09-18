@@ -136,14 +136,7 @@ Search for "airios" in Developer Tools > Services in your Home Assistant instanc
 
 ### Debugging
 
-When debugging or reporting issues, turn on debug logging by adding this to your `configuration.yaml`
-and restarting Home Assistant:
+When debugging or reporting Issues, turn on debug logging using the three dots menu in the Airios integration pane.
 
-```yaml
-logger:
-  default: warning
-  logs:
-    custom_components.airios_ventilation: debug
-    pyairios: debug
-```
-
+When you next deactivate debug logging (in a browser), a debug log file will appear in Downloads.
+Attach it as is to your issue (drop it on the edit pane).
