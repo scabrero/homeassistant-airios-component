@@ -11,19 +11,20 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios import ProductId
-from pyairios.constants import VMDBypassMode
+from pyairios.constants import (
+    VMDBypassMode,  # , VMDOffOnMode < must wait for pyairios update
+)
 from pyairios.exceptions import AiriosException
 
 from .entity import AiriosEntity
 
 if typing.TYPE_CHECKING:
     from collections.abc import Callable
+    from types import ModuleType
 
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from pyairios.data_model import AiriosNodeData
-    from pyairios.models.vmd_02rps78 import VMD02RPS78
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -49,18 +50,47 @@ NAME_TO_BYPASS_MODE = {value: key for (key, value) in BYPASS_MODE_TO_NAME.items(
 
 
 def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
-    """Convert bypass mode to select's value."""
+    """Convert bypass mode to selects value."""
     return BYPASS_MODE_TO_NAME.get(v)
 
 
-VMD_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
-    AiriosSelectEntityDescription(
+OFFON_MODE_TO_NAME: dict[int, str] = {  # VMDOffOnMode, str] = {
+    0: "off",  # VMDOffOnMode.OFF: "off",
+    1: "on",  # VMDOffOnMode.ON: "on",
+    10: "unknown",  # VMDOffOnMode.UNKNOWN: "unknown",
+}
+NAME_TO_OFFON_MODE = {value: key for (key, value) in OFFON_MODE_TO_NAME.items()}
+
+
+def off_on_value_fn(v: VMDBypassMode) -> str | None:
+    """Convert off-on mode to selects value."""
+    return OFFON_MODE_TO_NAME.get(v)
+
+
+# These tuples must match the NodeData defined in pyairios models/
+# thus the NodeData must contain a key named like the Description key defined here
+# When a new device/rev VMD-02RPS78 is added that doesn't support the following
+# selects/functions, or in fact supports more than these: rename or subclass
+
+VMD_02_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
+    AiriosSelectEntityDescription(  # only for vmd_02rps78
         key="bypass_mode",
         translation_key="bypass_mode",
         options=["close", "open", "auto"],
         value_fn=bypass_mode_value_fn,
     ),
 )
+
+VMD_07_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
+    AiriosSelectEntityDescription(  # only for vmd_07rps13
+        key="basic_ventilation_enable",
+        translation_key="basic_vent_enable_sel",
+        options=["off", "on"],
+        value_fn=off_on_value_fn,
+    ),
+)
+
+models: dict[str, ModuleType]
 
 
 async def async_setup_entry(
@@ -69,7 +99,12 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the selectors."""
+    global models  # noqa PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
+
+    # fetch model definitions from bridge data
+    bridge_id = entry.data[CONF_ADDRESS]  # await coordinator.api.bridge.slave_id()
+    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
@@ -83,15 +118,24 @@ async def async_setup_entry(
                 via = entry
 
         entities: list[AiriosSelectEntity] = []
-        if node["product_id"] is None or node["product_id"].value is None:
-            msg = "Node product ID not available"
+
+        if node["product_name"] is None:
+            msg = "Node product name not available"
             raise PlatformNotReady(msg)
 
-        if node["product_id"].value == ProductId.VMD_02RPS78:
+        # only for VMD-02RPS78 (controller), not REM
+        if node["product_name"].value == "VMD-02RPS78":
             entities.extend(
                 [
                     AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    for description in VMD_SELECT_ENTITIES
+                    for description in VMD_02_SELECT_ENTITIES
+                ]
+            )
+        elif node["product_name"].value == "VMD-07RPS13":
+            entities.extend(
+                [
+                    AiriosSelectEntity(description, coordinator, node, via, subentry)
+                    for description in VMD_07_SELECT_ENTITIES
                 ]
             )
         async_add_entities(entities, config_subentry_id=subentry_id)
@@ -110,21 +154,32 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         via_config_entry: ConfigEntry | None,
         subentry: ConfigSubentry | None,
     ) -> None:
-        """Initialize a Airios select entity."""
+        """Initialize an Airios select entity."""
         super().__init__(description.key, coordinator, node, via_config_entry, subentry)
         self.entity_description = description
         self._attr_current_option = None
+        self.node = node
 
     async def _select_option_internal(self, option: str) -> bool:
         if option == self.current_option:
             return False
 
+        product_name = self.node["product_name"].value
+        ret = 10  # VMDOffOnMode.ERROR
         try:
-            node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
-            bypass_mode = NAME_TO_BYPASS_MODE[option]
-            ret = await node.set_bypass_mode(bypass_mode)
+            _nod = models.get(product_name).Node
+            if product_name == "VMD-02RPS78":
+                vmd = cast("_nod", self.node)
+                if self.entity_description.key == "bypass_mode":
+                    bypass_mode = NAME_TO_BYPASS_MODE[option]
+                    ret = await vmd.set_bypass_mode(bypass_mode)
+            elif product_name == "VMD-07RPS13":
+                vmd = cast("_nod", self.node)
+                if self.entity_description.key == "basic_ventilation_enable":
+                    new_state = NAME_TO_OFFON_MODE[option]
+                    ret = await vmd.set_basic_vent_enable(new_state)
         except AiriosException as ex:
-            msg = f"Failed to set bypass mode {option}"
+            msg = f"Failed to set select option {option}"
             raise HomeAssistantError(msg) from ex
         else:
             return ret
@@ -162,7 +217,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
                 self._attr_available = self._attr_current_option is not None
                 if result.status is not None:
                     self.set_extra_state_attributes_internal(result.status)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, KeyError):
             _LOGGER.exception(
                 "Failed to update node %s select %s",
                 f"0x{self.rf_address:08X}",

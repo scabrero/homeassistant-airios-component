@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
     CONF_ADDRESS,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
@@ -26,7 +27,6 @@ from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.typing import StateType
 from pyairios.constants import (
-    ProductId,
     ResetMode,
     VMDBypassPosition,
     VMDErrorCode,
@@ -37,7 +37,6 @@ from pyairios.constants import (
 )
 from pyairios.exceptions import AiriosException
 
-from .coordinator import AiriosDataUpdateCoordinator
 from .entity import AiriosEntity
 from .services import SERVICE_DEVICE_RESET, SERVICE_FACTORY_RESET
 
@@ -161,7 +160,12 @@ BRIDGE_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
 )
 
-VMD_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-02xxx is added that doesn't support the following sensors,
+# or in fact supports more than these: rename or subclass
+
+# For Siber DF Optima 2, VMD_02RPS78
+VMD_02_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
         key="indoor_air_temperature",
         translation_key="indoor_air_temperature",
@@ -272,6 +276,93 @@ VMD_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
 )
 
+# ClimaRad Ventura V1x, VMD-07RPS13 (Airios build year 2021, rev 15)
+# To support a V1c etc., add an extra set of sensors (preheat, ...)
+VMD_07_SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
+    AiriosSensorEntityDescription(
+        key="indoor_air_temperature",
+        translation_key="indoor_air_temperature",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_display_precision=1,
+        value_fn=temperature_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        key="exhaust_air_temperature",
+        translation_key="exhaust_air_temperature",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_display_precision=1,
+        value_fn=temperature_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        key="supply_air_temperature",
+        translation_key="supply_air_temperature",
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        suggested_display_precision=1,
+        value_fn=temperature_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        key="supply_fan_speed",
+        translation_key="supply_fan_speed",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        suggested_display_precision=0,
+    ),
+    AiriosSensorEntityDescription(
+        key="exhaust_fan_speed",
+        translation_key="exhaust_fan_speed",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        suggested_display_precision=0,
+    ),
+    AiriosSensorEntityDescription(
+        key="error_code",
+        translation_key="error_code",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=SensorDeviceClass.ENUM,
+        options=list(dict.fromkeys(VMD_ERROR_CODE_MAP.values())),
+        value_fn=error_code_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        key="filter_remaining_days",
+        translation_key="filter_remaining_days",
+        native_unit_of_measurement=UnitOfTime.DAYS,
+        device_class=SensorDeviceClass.DURATION,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    AiriosSensorEntityDescription(
+        key="filter_remaining_percent",
+        translation_key="filter_remaining_percent",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        suggested_display_precision=0,
+    ),
+    AiriosSensorEntityDescription(
+        key="bypass_position",
+        translation_key="bypass_position",
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=bypass_position_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        key="co2_level",
+        translation_key="co2_level",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+    ),
+    AiriosSensorEntityDescription(
+        key="co2_control_setpoint",
+        translation_key="co2_setpoint",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+    ),
+)
+
 
 class AiriosSensorEntity(AiriosEntity, SensorEntity):
     """Airios sensor."""
@@ -300,6 +391,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
+
             result = device[self.entity_description.key]
             _LOGGER.debug(
                 "Node %s, sensor %s, result %s",
@@ -318,7 +410,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
                 if result.status is not None:
                     self.set_extra_state_attributes_internal(result.status)
 
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, KeyError):
             _LOGGER.exception(
                 "Failed to update node %s sensor %s",
                 f"0x{self.rf_address:08X}",
@@ -345,7 +437,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
 
     @final
     async def async_factory_reset(self) -> bool:
-        """Reset the bridge."""
+        """Factory-reset the bridge."""
         node = cast("BRDG02R13", await self.api().node(self.modbus_address))
         _LOGGER.info("Factory reset node %s", str(node))
         try:
@@ -377,30 +469,62 @@ async def async_setup_entry(
                 subentry = se
                 via_config_entry = entry
 
-        result = node["product_id"]
-        if result is None or result.value is None:
-            msg = "Failed to fetch product id from node"
+        entities: list[AiriosSensorEntity] = []
+        product_name = node["product_name"].value
+
+        if product_name is None:
+            msg = "Failed to fetch product name from node"
             raise ConfigEntryNotReady(msg)
 
-        entities: list[AiriosSensorEntity] = []
-        if result.value == ProductId.BRDG_02R13:
+        _LOGGER.debug(
+            "Sensor setup for node %s@%s", node["product_name"], node["slave_id"]
+        )
+        if product_name.startswith("BRDG-"):
             entities.extend(
                 [
                     AiriosSensorEntity(
-                        description, coordinator, node, via_config_entry, subentry
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
                     for description in BRIDGE_SENSOR_ENTITIES
                 ]
             )
-        elif result.value == ProductId.VMD_02RPS78:
+        elif product_name.startswith("VMD-02"):
+            # only controllers, add is_controller() to model.py?
             entities.extend(
                 [
                     AiriosSensorEntity(
-                        description, coordinator, node, via_config_entry, subentry
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
                     )
-                    for description in VMD_SENSOR_ENTITIES
+                    for description in VMD_02_SENSOR_ENTITIES
                 ]
             )
+        elif product_name.startswith("VMD-07"):
+            # only controllers, add is_controller() to model.py?
+            entities.extend(
+                [
+                    AiriosSensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
+                    )
+                    for description in VMD_07_SENSOR_ENTITIES
+                ]
+            )
+        else:
+            _LOGGER.debug(
+                "Skipping Sensor setup for node %s@%s", product_name, node["slave_id"]
+            )
+
         async_add_entities(entities, config_subentry_id=subentry_id)
 
     platform = entity_platform.async_get_current_platform()

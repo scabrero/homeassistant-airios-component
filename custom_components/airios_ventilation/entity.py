@@ -39,6 +39,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         super().__init__(coordinator)
 
         self.modbus_address = node["slave_id"]
+        # in pymodbus>=3.11 keyword "device_id". prop name not refactored in pyairios
 
         if node["rf_address"] is None or node["rf_address"].value is None:
             msg = "Node RF address not available"
@@ -50,10 +51,15 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             raise PlatformNotReady(msg)
         product_name = node["product_name"].value
 
-        if node["product_id"] is None or node["product_id"].value is None:
+        if node["product_id"] is None:
             msg = "Node product ID not available"
             raise PlatformNotReady(msg)
-        product_id = node["product_id"].value
+        if isinstance(node["product_id"], int):
+            product_id = node[
+                "product_id"
+            ]  # BRDG ProductId slipping through despite refactor
+        else:
+            product_id = node["product_id"].value
 
         if node["sw_version"] is None or node["sw_version"].value is None:
             msg = "Node software version not available"

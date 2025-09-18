@@ -36,8 +36,9 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
 ]
 
-
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
+
+modbus_address: int
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
@@ -55,11 +56,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         raise ConfigEntryError(msg)
 
     modbus_address = entry.data[CONF_ADDRESS]
-    api = Airios(transport, modbus_address)
+    api = Airios(transport, modbus_address)  # calls lib pyairios __init__
 
     update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
 
     bridge_rf_address = await api.bridge.node_rf_address()
     if bridge_rf_address is None or bridge_rf_address.value is None:
@@ -86,10 +87,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     product_name = result.value
 
     result = await api.bridge.node_product_id()
-    if result is None or result.value is None:
+    if result is None:  # or result.value is None:
         msg = "Node product ID not available"
         raise ConfigEntryNotReady(msg)
-    product_id = result.value
+    if isinstance(result, int):
+        product_id = result
+    else:
+        product_id = result.value  # still seeing a ProductId packed?
+        _LOGGER.debug(
+            "airios_cc init - old style product_id received for {product_name}"
+        )
 
     result = await api.bridge.node_software_version()
     if result is None or result.value is None:
@@ -109,7 +116,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
+    # sets up Airios fans, sensors etc.
     return True
 
 

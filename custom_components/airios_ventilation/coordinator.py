@@ -38,8 +38,8 @@ class AiriosDataUpdateCoordinator(DataUpdateCoordinator[AiriosData]):
         self.api = api
 
     async def _async_update_data(self) -> AiriosData:
-        """Fetch state from API."""
-        _LOGGER.debug("Updating data state cache")
+        """Fetch state by polling API and forward it to Home Assistant."""
+        _LOGGER.debug("Updating HA data state cache")
         try:
             return await self.api.fetch()
         except AiriosException as err:
