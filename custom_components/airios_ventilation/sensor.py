@@ -49,7 +49,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
     from pyairios.data_model import AiriosNodeData
-    from pyairios.models import BRDG02R13
+    from pyairios.models.brdg_02r13 import BRDG02R13
 
     from .coordinator import AiriosDataUpdateCoordinator
 
