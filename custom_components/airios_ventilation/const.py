@@ -2,7 +2,7 @@
 
 from enum import IntEnum, auto
 
-from pyairios import ProductId
+from pyairios.constants import ProductId
 
 
 class BridgeType(IntEnum):

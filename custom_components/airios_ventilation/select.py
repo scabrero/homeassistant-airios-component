@@ -11,8 +11,7 @@ from homeassistant.components.select import SelectEntity, SelectEntityDescriptio
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios import ProductId
-from pyairios.constants import VMDBypassMode
+from pyairios.constants import ProductId, VMDBypassMode
 from pyairios.exceptions import AiriosException
 
 from .entity import AiriosEntity
@@ -145,7 +144,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]
+            result = device[self.entity_description.key]  # type: ignore[literal-required]
             _LOGGER.debug(
                 "Node %s, select %s, result %s",
                 f"0x{self.rf_address:08X}",

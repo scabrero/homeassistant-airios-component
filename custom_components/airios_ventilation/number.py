@@ -16,8 +16,8 @@ from homeassistant.components.number import (
 from homeassistant.const import CONF_ADDRESS, EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import PlatformNotReady
-from pyairios import AiriosException, ProductId
-from pyairios.constants import VMDCapabilities
+from pyairios.constants import ProductId, VMDCapabilities
+from pyairios.exceptions import AiriosException
 
 from .entity import AiriosEntity
 
@@ -213,7 +213,7 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]
+            result = device[self.entity_description.key]  # type: ignore[literal-required]
             _LOGGER.debug(
                 "Node %s, number %s, result %s",
                 f"0x{self.rf_address:08X}",
