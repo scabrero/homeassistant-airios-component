@@ -17,13 +17,20 @@ from homeassistant.const import (
 )
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
-from pyairios import Airios, AiriosRtuTransport, AiriosTcpTransport
+from pyairios import Airios
+from pyairios.client import (
+    AiriosBaseTransport,
+    AiriosRtuTransport,
+    AiriosTcpTransport,
+)
+from pyairios.exceptions import AiriosException
 
 from .const import DEFAULT_NAME, DEFAULT_SCAN_INTERVAL, DOMAIN, BridgeType
 from .coordinator import AiriosDataUpdateCoordinator
 
 if typing.TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pyairios.constants import ProductId
     from pyairios.registers import Result
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +49,7 @@ type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
 
 async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Set up Airios from a config entry."""
+    transport: AiriosBaseTransport | None = None
     bridge_type = entry.data[CONF_TYPE]
     if bridge_type == BridgeType.SERIAL:
         device = entry.data[CONF_DEVICE]
@@ -61,16 +69,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
     await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
 
-    def bridge_attrib(attrib: Result, attrib_name: str) -> str | int:
-        if attrib is None or (not isinstance(attrib, int) and attrib.value is None):
-            _msg = f"Failed to get {attrib_name}"
-            raise ConfigEntryNotReady(_msg)
-        if isinstance(attrib, int):
-            return attrib
-        return attrib.value
-
-    result = await api.bridge.node_rf_address()
-    bridge_rf_address = bridge_attrib(result, "bridge RF address")
+    result_brdg_rf_address = await api.bridge.node_rf_address()
+    if result_brdg_rf_address is None or result_brdg_rf_address.value is None:
+        msg = "Failed to get bridge RF address"
+        raise ConfigEntryNotReady(msg)
+    bridge_rf_address = result_brdg_rf_address.value
 
     if entry.unique_id != str(bridge_rf_address):
         message = (
@@ -82,27 +85,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     entry.async_on_unload(entry.add_update_listener(update_listener))
     entry.runtime_data = coordinator
 
-    # Always register a device for the bridge. It is necessary to set the
-    # via_device attribute for the bound nodes.
-    result = await api.bridge.node_product_name()
-    product_name = bridge_attrib(result, "bridge product name")
+    product_name = None
+    product_id = None
+    sw_version = None
+    try:
+        # Always register a device for the bridge. It is necessary to set the
+        # via_device attribute for the bound nodes.
+        result: Result[str] | Result[ProductId] | Result[int] | None = None
 
-    result = await api.bridge.node_product_id()
-    product_id = bridge_attrib(result, "bridge product ID")
+        result = await api.bridge.node_product_name()
+        product_name = result.value
 
-    result = await api.bridge.node_software_version()
-    sw_version = bridge_attrib(result, "bridge software version")
+        result = await api.bridge.node_product_id()
+        product_id = result.value
 
-    device_registry = dr.async_get(hass)
-    device_registry.async_get_or_create(
-        config_entry_id=entry.entry_id,
-        identifiers={(DOMAIN, str(bridge_rf_address))},
-        manufacturer=DEFAULT_NAME,
-        name=product_name,
-        model=product_name,
-        model_id=f"0x{product_id:08X}",
-        sw_version=f"0x{sw_version:04X}",
-    )
+        result = await api.bridge.node_software_version()
+        sw_version = result.value
+    except AiriosException as ex:
+        msg = f"Failed to read bridge information: {ex}"
+        raise ConfigEntryNotReady(msg) from ex
+    finally:
+        device_registry = dr.async_get(hass)
+        device_registry.async_get_or_create(
+            config_entry_id=entry.entry_id,
+            identifiers={(DOMAIN, str(bridge_rf_address))},
+            manufacturer=DEFAULT_NAME,
+            name=product_name,
+            model=product_name,
+            model_id=f"0x{product_id:08X}",
+            sw_version=f"0x{sw_version:04X}",
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # sets up Airios fans, sensors etc.

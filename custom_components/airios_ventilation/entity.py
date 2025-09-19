@@ -68,6 +68,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         if not product_name:
             product_name = f"0x{self.rf_address:06X}"
 
+        name: str | None = None
         if subentry is None:
             name = product_name
         else:

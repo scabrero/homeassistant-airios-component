@@ -300,7 +300,7 @@ class AiriosSensorEntity(AiriosEntity, SensorEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]
+            result = device[self.entity_description.key]  # type: ignore[literal-required]
             _LOGGER.debug(
                 "Node %s, sensor %s, result %s",
                 f"0x{self.rf_address:08X}",

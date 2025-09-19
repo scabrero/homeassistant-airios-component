@@ -15,7 +15,7 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from pyairios import ProductId
+from pyairios.constants import ProductId
 
 from .entity import AiriosEntity
 
@@ -89,7 +89,7 @@ class AiriosBinarySensorEntity(AiriosEntity, BinarySensorEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]
+            result = device[self.entity_description.key]  # type: ignore[literal-required]
             _LOGGER.debug(
                 "Node %s, binary sensor %s, result %s",
                 f"0x{self.rf_address:08X}",

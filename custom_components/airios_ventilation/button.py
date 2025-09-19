@@ -14,8 +14,8 @@ from homeassistant.components.button import (
 )
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.exceptions import ConfigEntryNotReady, HomeAssistantError
-from pyairios import AiriosException
 from pyairios.constants import ProductId
+from pyairios.exceptions import AiriosException
 
 from .entity import AiriosEntity
 

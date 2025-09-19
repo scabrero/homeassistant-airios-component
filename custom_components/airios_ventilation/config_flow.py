@@ -32,10 +32,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
-from pyairios import Airios, AiriosException, AiriosRtuTransport, AiriosTcpTransport
-from pyairios.constants import BindingStatus
-from pyairios.exceptions import AiriosBindingException
-from pyairios.node import ProductId
+from pyairios import Airios
+from pyairios.client import AiriosRtuTransport, AiriosTcpTransport
+from pyairios.constants import BindingStatus, ProductId
+from pyairios.exceptions import AiriosBindingException, AiriosException
 
 from .const import (
     CONF_BRIDGE_RF_ADDRESS,
@@ -237,10 +237,10 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
         if result.value != ProductId.BRDG_02R13:
             raise UnexpectedProductIdError
 
-        result = await api.bridge.node_rf_address()
-        if result is None or result.value is None:
+        result_rf_addr = await api.bridge.node_rf_address()
+        if result_rf_addr is None or result_rf_addr.value is None:
             raise UnexpectedProductIdError
-        bridge_rf_address = result.value
+        bridge_rf_address = result_rf_addr.value
 
         await self.async_set_unique_id(f"{bridge_rf_address}")
         if self.source == SOURCE_USER:
@@ -357,7 +357,10 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
             try:
                 product = user_input[CONF_DEVICE]
                 product_id = SUPPORTED_UNITS.get(product)
-                self._bind_product_id = ProductId(product_id)
+                if product_id is None:
+                    errors["base"] = "unexpected_product_id"
+                else:
+                    self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"
             return await self.async_step_do_bind_controller()
@@ -534,7 +537,10 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             try:
                 product = user_input[CONF_DEVICE]
                 product_id = SUPPORTED_ACCESSORIES.get(product)
-                self._bind_product_id = ProductId(product_id)
+                if product_id is None:
+                    errors["base"] = "unexpected_product_id"
+                    return _show_form(bound_controllers, errors)
+                self._bind_product_id = product_id
             except ValueError:
                 errors["base"] = "unexpected_product_id"
                 return _show_form(bound_controllers, errors)

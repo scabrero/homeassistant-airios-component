@@ -15,12 +15,13 @@ from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
 from homeassistant.helpers import entity_platform
-from pyairios import AiriosException, ProductId
 from pyairios.constants import (
+    ProductId,
     VMDCapabilities,
     VMDRequestedVentilationSpeed,
     VMDVentilationSpeed,
 )
+from pyairios.exceptions import AiriosException
 
 from .entity import AiriosEntity
 from .services import (
@@ -105,17 +106,17 @@ async def async_setup_entry(
 
         entities: list[FanEntity] = []
 
-        result = node["product_id"]
-        if result is None or result.value is None:
+        r1 = node["product_id"]
+        if r1 is None or r1.value is None:
             msg = "Failed to fetch product id from node"
             raise PlatformNotReady(msg)
-        product_id = result.value
+        product_id = r1.value
 
         try:
             if product_id == ProductId.VMD_02RPS78:
                 vmd = cast("VMD02RPS78", await coordinator.api.node(modbus_address))
-                result = await vmd.capabilities()
-                capabilities = result.value
+                r2 = await vmd.capabilities()
+                capabilities = r2.value
                 entities.extend(
                     [
                         AiriosFanEntity(
@@ -295,7 +296,7 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
         )
         try:
             device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]
+            result = device[self.entity_description.key]  # type: ignore[literal-required]
             _LOGGER.debug(
                 "Node %s, fan %s, result %s",
                 f"0x{self.rf_address:08X}",
@@ -359,11 +360,11 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
     ) -> bool:
         """Set the fans speeds for the low preset mode."""
         node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
-        msg = (
+        infomsg = (
             "Setting fans speeds for low preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
         )
-        _LOGGER.info(msg)
+        _LOGGER.info(infomsg)
         try:
             if not await node.set_preset_low_fan_speed_supply(supply_fan_speed):
                 msg = f"Failed to set supply fan speed to {supply_fan_speed}"
@@ -384,11 +385,11 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
     ) -> bool:
         """Set the fans speeds for the medium preset mode."""
         node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
-        msg = (
+        infomsg = (
             "Setting fans speeds for medium preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
         )
-        _LOGGER.info(msg)
+        _LOGGER.info(infomsg)
         try:
             if not await node.set_preset_medium_fan_speed_supply(supply_fan_speed):
                 msg = f"Failed to set supply fan speed to {supply_fan_speed}"
@@ -409,11 +410,11 @@ class AiriosFanEntity(AiriosEntity, FanEntity):
     ) -> bool:
         """Set the fans speeds for the high preset mode."""
         node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
-        msg = (
+        infomsg = (
             "Setting fans speeds for high preset on node "
             f"{node} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
         )
-        _LOGGER.info(msg)
+        _LOGGER.info(infomsg)
         try:
             if not await node.set_preset_high_fan_speed_supply(supply_fan_speed):
                 msg = f"Failed to set supply fan speed to {supply_fan_speed}"
