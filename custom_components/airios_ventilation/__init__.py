@@ -63,17 +63,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
     await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
 
-    def bridge_attrib(attrib: Result, name: str) -> str | int:
+    def bridge_attrib(attrib: Result, attrib_name: str) -> str | int:
         if attrib is None or (not isinstance(attrib, int) and attrib.value is None):
-            _msg = f"Failed to get {name}"
+            _msg = f"Failed to get {attrib_name}"
             raise ConfigEntryNotReady(_msg)
         if isinstance(attrib, int):
             return attrib
         return attrib.value
 
-    bridge_rf_address = await api.bridge.node_rf_address()
-    if bridge_attrib(bridge_rf_address, "bridge RF address"):
-        bridge_rf_address = bridge_rf_address.value
+    result = await api.bridge.node_rf_address()
+    bridge_rf_address = bridge_attrib(result, "bridge RF address")
 
     if entry.unique_id != str(bridge_rf_address):
         message = (
