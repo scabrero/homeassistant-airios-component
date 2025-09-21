@@ -18,13 +18,13 @@ from homeassistant.const import (
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import device_registry as dr
 from pyairios import Airios, AiriosRtuTransport, AiriosTcpTransport
-from pyairios.registers import Result
 
 from .const import DEFAULT_NAME, DEFAULT_SCAN_INTERVAL, DOMAIN, BridgeType
 from .coordinator import AiriosDataUpdateCoordinator
 
 if typing.TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pyairios.registers import Result
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,8 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
             raise ConfigEntryNotReady(_msg)
         if isinstance(attrib, int):
             return attrib
-        else:
-            return attrib.value
+        return attrib.value
 
     bridge_rf_address = await api.bridge.node_rf_address()
     if bridge_attrib(bridge_rf_address, "bridge RF address"):
