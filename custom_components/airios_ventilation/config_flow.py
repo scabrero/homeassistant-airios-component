@@ -63,12 +63,12 @@ def supported_controllers(
 ) -> dict[str, int]:
     """
     Get supported models to use in config_flow BindController.
+
     :param coordinator: Coordinator to Airios lib
     :param bridge_address: the bridge node address
     :param prefix: filter for device types (use model property?)
     :return: dict of supported models matching prefix
     """
-
     prids = coordinator.data.nodes[bridge_address]["product_ids"]
     descr = coordinator.data.nodes[bridge_address]["model_descriptions"]
     res = {}
@@ -256,8 +256,8 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_validate_bridge(self, api: Airios) -> int:
         result = await api.bridge.node_product_id()
-        BRDG_ID = 0x0001C849
-        if result != BRDG_ID:  # ProductId.BRDG_02R13:
+        brdg_id = 0x0001C849
+        if result != brdg_id:
             raise UnexpectedProductIdError
 
         result = await api.bridge.node_rf_address()

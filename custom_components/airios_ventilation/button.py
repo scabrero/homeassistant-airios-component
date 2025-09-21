@@ -39,15 +39,15 @@ PARALLEL_UPDATES = 0
 # refactor the next set of calls, passing in filter_reset() etc.
 
 
-async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
+async def _filter_reset(node: AiriosNode, models: dict[str, ModuleType]) -> bool:  # noqa: ARG001
     _name = await node.node_product_name()
-    vmd = cast(type["models[_name.value].Node"], node)
+    vmd = cast("models[_name.value].Node", node)
     return await vmd.filter_reset()
 
 
-async def _temp_boost(node: AiriosNode, models: dict[str, ModuleType]) -> bool:
+async def _temp_boost(node: AiriosNode, models: dict[str, ModuleType]) -> bool:  # noqa: ARG001
     _name = await node.node_product_name()
-    vmd = cast(type["models[_name.value].Node"], node)
+    vmd = cast("models[_name.value].Node", node)
     return await vmd.set_ventilation_speed(VMDRequestedVentilationSpeed.HIGH)
 
 
@@ -88,7 +88,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the button platform."""
-    global models  # noqa PLW0603
+    global models  # noqa: PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data

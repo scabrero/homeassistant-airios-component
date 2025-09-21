@@ -167,7 +167,7 @@ async def async_setup_entry(
                             for description in VMD_FREEVENT_NUMBER_ENTITIES
                         ]
                     )
-                    _nod = models[key].Node
+                    _nod = models.get(key).Node
                     vmd = cast(
                         "_nod",
                         await coordinator.api.node(modbus_address),
@@ -218,7 +218,7 @@ class AiriosNumberEntity(AiriosEntity, NumberEntity):
         models = self.coordinator.api().bridge.models
         for key, _id in models.items():
             if _id == node.node_product_id():
-                _nod = models[key].Node
+                _nod = models.get(key).Node
                 vmd = cast("_nod", node)
                 return await self.entity_description.set_value_fn(vmd, value)
         return False

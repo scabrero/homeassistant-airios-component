@@ -178,9 +178,6 @@ async def async_setup_entry(
     """Set up the binary sensors."""
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
-    # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]
-
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry
         subentry_id = None

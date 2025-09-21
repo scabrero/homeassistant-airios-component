@@ -95,7 +95,7 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the fan entities."""
-    global models  # noqa PLW0603
+    global models  # noqa: PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     # fetch model definitions from bridge data
@@ -131,7 +131,7 @@ async def async_setup_entry(
                     # only controllers. Add is_controller() flag to model.py
                     _nod = models.get(key).Node
                     vmd = cast(
-                        type[_nod],
+                        "_nod",
                         await coordinator.api.node(modbus_address),
                     )
                     result = await vmd.capabilities()
