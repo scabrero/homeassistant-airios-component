@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from pyairios import Airios
     from pyairios.data_model import AiriosNodeData
-    from pyairios.registers import ResultStatus
+    from pyairios.registers import Result, ResultStatus
 
 
 class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
@@ -38,33 +38,28 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         """Initialize the entity."""
         super().__init__(coordinator)
 
+        def node_attrib(attrib: Result, attrib_name: str) -> str | int:
+            if attrib is None or (not isinstance(attrib, int) and attrib.value is None):
+                _msg = f"Node {attrib_name} not available"
+                raise PlatformNotReady(_msg)
+            if isinstance(attrib, int):
+                return attrib
+            return attrib.value
+
         self.modbus_address = node["slave_id"]
         # in pymodbus>=3.11 keyword "device_id". prop name not refactored in pyairios
 
-        if node["rf_address"] is None or node["rf_address"].value is None:
-            msg = "Node RF address not available"
-            raise PlatformNotReady(msg)
-        self.rf_address = node["rf_address"].value
+        result = node["rf_address"]
+        self.rf_address = node_attrib(result, "RF address")
 
-        if node["product_name"] is None or node["product_name"].value is None:
-            msg = "Node product name not available"
-            raise PlatformNotReady(msg)
-        product_name = node["product_name"].value
+        result = node["product_name"]
+        product_name = node_attrib(result, "product name")
 
-        if node["product_id"] is None:
-            msg = "Node product ID not available"
-            raise PlatformNotReady(msg)
-        if isinstance(node["product_id"], int):
-            product_id = node[
-                "product_id"
-            ]  # BRDG ProductId slipping through despite refactor
-        else:
-            product_id = node["product_id"].value
+        result = node["product_id"]
+        product_id = node_attrib(result, "product ID")
 
-        if node["sw_version"] is None or node["sw_version"].value is None:
-            msg = "Node software version not available"
-            raise PlatformNotReady(msg)
-        sw_version = node["sw_version"].value
+        result = node["sw_version"]
+        sw_version = node_attrib(result, "software version")
 
         if self.coordinator.config_entry is None:
             msg = "Unexpected error, config entry not defined"
