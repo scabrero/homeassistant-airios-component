@@ -58,7 +58,7 @@ CONF_MANUAL_PATH = "Enter Manually"
 _LOGGER = logging.getLogger(__name__)
 
 
-def supported_controllers(
+def supported_models(
     coordinator: AiriosDataUpdateCoordinator, bridge_address: int, prefix: str
 ) -> dict[str, int]:
     """
@@ -379,7 +379,7 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
         config_entry = self._get_entry()
         coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
         bridge_id = config_entry.data[CONF_ADDRESS]
-        supp_ctrl = supported_controllers(coordinator, bridge_id, "VMD-")
+        supp_ctrl = supported_models(coordinator, bridge_id, "VMD-")
 
         if user_input is not None:
             self._bind_product_serial = user_input.get(CONF_RF_ADDRESS)
@@ -540,7 +540,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
         config_entry = self._get_entry()
         coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
         bridge_id = config_entry.data[CONF_ADDRESS]
-        supp_acc = supported_controllers(coordinator, bridge_id, "VMN-")
+        supp_acc = supported_models(coordinator, bridge_id, "VMN-")
 
         def _show_form(
             bound_controllers: dict[Any, Any], errors: dict[str, str]
