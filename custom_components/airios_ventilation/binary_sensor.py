@@ -15,7 +15,6 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
-from pyairios import ProductId
 
 from .entity import AiriosEntity
 
@@ -131,7 +130,11 @@ NODE_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     ),
 )
 
-VMD_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
+# These tuples must match the NodeData defined in pyairios models/
+# When a new device VMD-02xxx is added that doesn't support the following
+# binary sensors, or in fact supports more than these: rename or subclass
+
+VMD_02_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     AiriosBinarySensorEntityDescription(
         key="filter_dirty",
         translation_key="filter_dirty",
@@ -140,6 +143,19 @@ VMD_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
     AiriosBinarySensorEntityDescription(
         key="defrost",
         translation_key="defrost",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
+)
+
+VMD_07_BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
+    AiriosBinarySensorEntityDescription(
+        key="filter_dirty",
+        translation_key="filter_dirty",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+    ),
+    AiriosBinarySensorEntityDescription(
+        key="basic_ventilation_enable",
+        translation_key="basic_vent_enabled",
         device_class=BinarySensorDeviceClass.RUNNING,
     ),
 )
@@ -183,11 +199,13 @@ async def async_setup_entry(
             )
             for description in NODE_BINARY_SENSOR_ENTITIES
         ]
-        result = node["product_id"]
-        if result is None or result.value is None:
-            msg = "Failed to fetch product id from node"
+        product_name = node["product_name"].value
+        if product_name is None:
+            msg = "Failed to fetch product name from node"
             raise ConfigEntryNotReady(msg)
-        if result.value == ProductId.VMD_02RPS78:
+
+        # only controllers, add is_controller() in pyairios?
+        if product_name.startswith("VMD-02"):
             entities.extend(
                 [
                     AiriosBinarySensorEntity(
@@ -197,10 +215,25 @@ async def async_setup_entry(
                         via_config_entry,
                         subentry,
                     )
-                    for description in VMD_BINARY_SENSOR_ENTITIES
+                    for description in VMD_02_BINARY_SENSOR_ENTITIES
                 ]
             )
-        if result.value == ProductId.VMN_05LM02:
+        elif product_name.startswith("VMD-07"):
+            entities.extend(
+                [
+                    AiriosBinarySensorEntity(
+                        description,
+                        coordinator,
+                        node,
+                        via_config_entry,
+                        subentry,
+                    )
+                    for description in VMD_07_BINARY_SENSOR_ENTITIES
+                    # first check if model supports this:
+                    # if binary_sensor coordinator.api().etc...
+                ]
+            )
+        elif product_name.startswith("VMN-"):
             entities.extend(
                 [
                     AiriosBinarySensorEntity(
@@ -213,4 +246,7 @@ async def async_setup_entry(
                     for description in VMN_BINARY_SENSOR_ENTITIES
                 ]
             )
+        else:
+            _LOGGER.debug("Skipping binary_sensor setup for node %s", product_name)
+
         async_add_entities(entities, config_subentry_id=subentry_id)
