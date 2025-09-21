@@ -39,8 +39,6 @@ PLATFORMS: list[Platform] = [
 
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
 
-modbus_address: int
-
 
 async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bool:
     """Set up Airios from a config entry."""
@@ -56,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         msg = f"Unexpected bridge type {bridge_type}"
         raise ConfigEntryError(msg)
 
-    modbus_address = entry.data[CONF_ADDRESS]
+    modbus_address: int = entry.data[CONF_ADDRESS]
     api = Airios(transport, modbus_address)  # calls lib pyairios __init__
 
     update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
