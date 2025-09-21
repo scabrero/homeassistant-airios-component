@@ -24,6 +24,7 @@ from .coordinator import AiriosDataUpdateCoordinator
 
 if typing.TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pyairios.registers import Result
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,18 +55,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         msg = f"Unexpected bridge type {bridge_type}"
         raise ConfigEntryError(msg)
 
-    modbus_address = entry.data[CONF_ADDRESS]
-    api = Airios(transport, modbus_address)
+    modbus_address: int = entry.data[CONF_ADDRESS]
+    api = Airios(transport, modbus_address)  # calls lib pyairios __init__
 
     update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
 
-    bridge_rf_address = await api.bridge.node_rf_address()
-    if bridge_rf_address is None or bridge_rf_address.value is None:
-        msg = "Failed to get bridge RF address"
-        raise ConfigEntryNotReady(msg)
-    bridge_rf_address = bridge_rf_address.value
+    def bridge_attrib(attrib: Result, attrib_name: str) -> str | int:
+        if attrib is None or (not isinstance(attrib, int) and attrib.value is None):
+            _msg = f"Failed to get {attrib_name}"
+            raise ConfigEntryNotReady(_msg)
+        if isinstance(attrib, int):
+            return attrib
+        return attrib.value
+
+    result = await api.bridge.node_rf_address()
+    bridge_rf_address = bridge_attrib(result, "bridge RF address")
 
     if entry.unique_id != str(bridge_rf_address):
         message = (
@@ -80,22 +86,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     # Always register a device for the bridge. It is necessary to set the
     # via_device attribute for the bound nodes.
     result = await api.bridge.node_product_name()
-    if result is None or result.value is None:
-        msg = "Node product name not available"
-        raise ConfigEntryNotReady(msg)
-    product_name = result.value
+    product_name = bridge_attrib(result, "bridge product name")
 
     result = await api.bridge.node_product_id()
-    if result is None or result.value is None:
-        msg = "Node product ID not available"
-        raise ConfigEntryNotReady(msg)
-    product_id = result.value
+    product_id = bridge_attrib(result, "bridge product ID")
 
     result = await api.bridge.node_software_version()
-    if result is None or result.value is None:
-        msg = "Node software version not available"
-        raise ConfigEntryNotReady(msg)
-    sw_version = result.value
+    sw_version = bridge_attrib(result, "bridge software version")
 
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
@@ -109,7 +106,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
+    # sets up Airios fans, sensors etc.
     return True
 
 
