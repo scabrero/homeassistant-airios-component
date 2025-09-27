@@ -163,7 +163,7 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
 
         product_name = self.node_data["product_name"].value
         _node = await self.api().node(self.modbus_address)
-        ret = VMDOffOnMode.ERROR
+        ret = VMDOffOnMode.UNKNOWN
         try:
             _node_type = models.get(product_name).Node
             if product_name == "VMD-02RPS78":
