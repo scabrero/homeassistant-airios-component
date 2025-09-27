@@ -124,11 +124,9 @@ async def async_setup_entry(
         try:
             # lookup node model family by key # compare to pyairios/cli.py
             for key, _id in prids.items():
-                # dict of ids by model_key (names).
-                # Can we use node["product_name"] as key?
-
+                # dict of ids by model_key (names)
                 if product_id == _id and key.startswith("VMD-"):
-                    # only controllers. Add is_controller() flag to model.py
+                    # only controllers. Add is_controller() flag to model/VMX.py?
                     _nod = models.get(key).Node
                     vmd = cast(
                         "_nod",
