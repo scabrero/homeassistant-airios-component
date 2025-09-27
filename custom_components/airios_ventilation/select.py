@@ -152,7 +152,9 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         subentry: ConfigSubentry | None,
     ) -> None:
         """Initialize an Airios select entity."""
-        super().__init__(description.key, coordinator, node_data, via_config_entry, subentry)
+        super().__init__(
+            description.key, coordinator, node_data, via_config_entry, subentry
+        )
         self.entity_description = description
         self._attr_current_option = None
         self.node_data = node_data
