@@ -29,6 +29,7 @@ Please check the [bridge documentation page](doc/1-brdg02r13.md) for more inform
 ### Ventilation units
 
 * Siber *DF Optima2 BP* (Airios *VMD-02RPS78*)
+* ClimaRad *Ventura V1X HRU* (Airios *VMD-07RPS13*)
 
 ### Accessories
 
