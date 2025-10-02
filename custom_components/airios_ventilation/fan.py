@@ -97,11 +97,10 @@ async def async_setup_entry(
     """Set up the fan entities."""
     global models  # noqa: PLW0603
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
-
-    # fetch model definitions from bridge data
-    bridge_id = entry.data[CONF_ADDRESS]
-    models = coordinator.data.nodes[bridge_id]["models"]  # added to pyairios data_model
-    prids = coordinator.data.nodes[bridge_id]["product_ids"]
+    api = coordinator.api
+    # fetch model definitions from api
+    models = await api.airios_models()
+    prids = await api.airios_prids()
 
     for modbus_address, node in coordinator.data.nodes.items():
         # Find matching subentry

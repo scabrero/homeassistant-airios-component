@@ -58,28 +58,32 @@ CONF_MANUAL_PATH = "Enter Manually"
 _LOGGER = logging.getLogger(__name__)
 
 
-def supported_models(
-    coordinator: AiriosDataUpdateCoordinator, bridge_address: int, prefix: str
+async def supported_models(
+    coordinator: AiriosDataUpdateCoordinator,
+        # bridge_address: int,
+        prefix: str
 ) -> dict[str, int]:
     """
-    Get supported models to use in config_flow BindController.
+    Get supported models to use in config_flow BindController/BindAccessory.
 
     :param coordinator: Coordinator to Airios lib
-    :param bridge_address: the bridge node address
+    # :param bridge_address: the bridge node address
     :param prefix: filter for device types (use model property?)
     :return: dict of supported models matching prefix
     """
-    prids = coordinator.data.nodes[bridge_address]["product_ids"]
-    descr = coordinator.data.nodes[bridge_address]["model_descriptions"]
-    res = {}
+    api = coordinator.api
+    prids = await api.airios_prids()
+    descr = await api.airios_model_descr()
+    _LOGGER.debug("descr: %s", descr)
+    res: dict[str, int] = {}
     for item in prids:
         if item.startswith(prefix):  # if node["device_type"] flag == type.CTR
-            if isinstance(descr[item], tuple):  # a definition can support >1 fan types
+            if isinstance(descr[item], tuple):  # a definition can support > 1 fan types
                 for sub_item in descr[item]:
                     res[sub_item] = prids[item]
             else:
                 res[descr[item]] = prids[item]
-    _LOGGER.debug(res)
+    _LOGGER.debug("supported models: %s", res)
     return res
 
 
@@ -375,11 +379,11 @@ class ControllerSubentryFlowHandler(ConfigSubentryFlow):
         """Bind a new controller."""
         errors: dict[str, str] = {}
 
-        # read model definitions from bridge data
+        # read model definitions from Airios api
         config_entry = self._get_entry()
         coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
-        bridge_id = config_entry.data[CONF_ADDRESS]
-        supp_ctrl = supported_models(coordinator, bridge_id, "VMD-")
+        # bridge_id = config_entry.data[CONF_ADDRESS]
+        supp_ctrl: dict[str, int] = await supported_models(coordinator, "VMD-")
 
         if user_input is not None:
             self._bind_product_serial = user_input.get(CONF_RF_ADDRESS)
@@ -539,8 +543,7 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
         # read model definitions from bridge data
         config_entry = self._get_entry()
         coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
-        bridge_id = config_entry.data[CONF_ADDRESS]
-        supp_acc = supported_models(coordinator, bridge_id, "VMN-")
+        supp_acc = await supported_models(coordinator, "VMN-")
 
         def _show_form(
             bound_controllers: dict[Any, Any], errors: dict[str, str]
