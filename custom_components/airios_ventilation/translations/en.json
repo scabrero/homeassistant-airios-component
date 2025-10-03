@@ -153,15 +153,13 @@
           "auto": "Auto",
           "error": "Error"
         }
-      },
-      "basic_vent_enable_sel": {
-        "name": "Base ventilation",
-        "state": {
-          "off": "Off",
-          "on": "On",
-          "error": "Error"
-        }
-      }    },
+      }
+    },
+    "switch": {
+      "basic_vent_enable_sw": {
+        "name": "Base ventilation"
+      }
+    },
     "fan": {
       "ventilation_speed": {
         "name": "Ventilation speed",

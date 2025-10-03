@@ -51,14 +51,13 @@ def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
     """Convert bypass mode to select's value."""
     return BYPASS_MODE_TO_NAME.get(v)
 
-
+# a set for On/Off/Unknown. Consider using a Switch instead for On/Off only
 OFFON_MODE_TO_NAME: dict[VMDOffOnMode, str] = {
     VMDOffOnMode.OFF: "off",
     VMDOffOnMode.ON: "on",
     VMDOffOnMode.UNKNOWN: "unknown",
 }
 NAME_TO_OFFON_MODE = {value: key for (key, value) in OFFON_MODE_TO_NAME.items()}
-
 
 def off_on_value_fn(v: VMDBypassMode) -> str | None:
     """Convert off-on mode to selects value."""
@@ -76,15 +75,6 @@ VMD_02_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
         translation_key="bypass_mode",
         options=["close", "open", "auto"],
         value_fn=bypass_mode_value_fn,
-    ),
-)
-
-VMD_07_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
-    AiriosSelectEntityDescription(  # only for vmd_07rps13
-        key="basic_ventilation_enable",
-        translation_key="basic_vent_enable_sel",
-        options=["off", "on"],
-        value_fn=off_on_value_fn,
     ),
 )
 
@@ -127,13 +117,6 @@ async def async_setup_entry(
                     for description in VMD_02_SELECT_ENTITIES
                 ]
             )
-        elif node["product_name"].value == "VMD-07RPS13":
-            entities.extend(
-                [
-                    AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    for description in VMD_07_SELECT_ENTITIES
-                ]
-            )
         async_add_entities(entities, config_subentry_id=subentry_id)
 
 
@@ -172,11 +155,6 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
                 if self.entity_description.key == "bypass_mode":
                     bypass_mode = NAME_TO_BYPASS_MODE[option]
                     ret = await vmd.set_bypass_mode(bypass_mode)
-            elif product_name == "VMD-07RPS13":
-                vmd = cast("_node_type", _node)
-                if self.entity_description.key == "basic_ventilation_enable":
-                    new_state = NAME_TO_OFFON_MODE[option]
-                    ret = await vmd.set_basic_vent_enable(new_state)
         except AiriosException as ex:
             msg = f"Failed to set select option {option}"
             raise HomeAssistantError(msg) from ex
