@@ -60,8 +60,8 @@ _LOGGER = logging.getLogger(__name__)
 
 async def supported_models(
     coordinator: AiriosDataUpdateCoordinator,
-        # bridge_address: int,
-        prefix: str
+    # bridge_address: int,
+    prefix: str,
 ) -> dict[str, int]:
     """
     Get supported models to use in config_flow BindController/BindAccessory.

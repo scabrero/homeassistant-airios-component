@@ -38,7 +38,10 @@ PARALLEL_UPDATES = 0
 
 # refactor the next set of calls, passing in filter_reset() etc.
 
-async def _base_vent_switch(node: AiriosNode, models: dict[str, ModuleType], newState: bool) -> bool:  # noqa: ARG001
+
+async def _base_vent_switch(
+    node: AiriosNode, models: dict[str, ModuleType], newState: bool
+) -> bool:  # noqa: ARG001
     _name = await node.node_product_name()
     vmd = cast("models[_name.value].Node", node)
     return await vmd.set_basic_vent_enable(newState)

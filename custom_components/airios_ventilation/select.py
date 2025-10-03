@@ -51,6 +51,7 @@ def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
     """Convert bypass mode to select's value."""
     return BYPASS_MODE_TO_NAME.get(v)
 
+
 # a set for On/Off/Unknown. Consider using a Switch instead for On/Off only
 OFFON_MODE_TO_NAME: dict[VMDOffOnMode, str] = {
     VMDOffOnMode.OFF: "off",
@@ -58,6 +59,7 @@ OFFON_MODE_TO_NAME: dict[VMDOffOnMode, str] = {
     VMDOffOnMode.UNKNOWN: "unknown",
 }
 NAME_TO_OFFON_MODE = {value: key for (key, value) in OFFON_MODE_TO_NAME.items()}
+
 
 def off_on_value_fn(v: VMDBypassMode) -> str | None:
     """Convert off-on mode to selects value."""
