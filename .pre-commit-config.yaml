@@ -1,0 +1,52 @@
+repos:
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.8.24
+    hooks:
+      - id: uv-lock
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.3
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+        files: ^(custom_components)/.+\.py$
+      - id: ruff-format
+        files: ^(custom_components)/.+\.py$
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args:
+          - --ignore-words-list=hass
+          - --skip="./.*,*.csv,*.json"
+          - --quiet-level=2
+        exclude_types: [ csv, json ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-executables-have-shebangs
+        stages: [ manual ]
+      - id: check-json
+  # These hooks require the locally installed venv (for example myPyllant for mypy)
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        args:
+          - --follow-untyped-imports
+          - --pretty
+          - --show-error-codes
+          - --show-error-context
+        language: system
+        pass_filenames: true
+        files: ^(custom_components)/.+\.py$
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+      - id: pyright
+        name: pyright
+        entry: uv run pyright
+        language: system
+        files: ^(custom_components)/.+\.py$
