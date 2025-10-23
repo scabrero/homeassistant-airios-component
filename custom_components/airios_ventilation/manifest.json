@@ -10,6 +10,6 @@
   "issue_tracker": "https://github.com/scabrero/homeassistant-airios-component/issues",
   "loggers": ["pymodbus", "pyairios"],
   "quality_scale": "bronze",
-  "requirements": ["pyairios==1.0.7"],
+  "requirements": ["pyairios==1.1.0"],
   "version": "1.0.2"
 }

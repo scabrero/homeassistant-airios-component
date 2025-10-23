@@ -5,24 +5,27 @@ from __future__ import annotations
 import logging
 import typing
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any
 
 from homeassistant.components.select import SelectEntity, SelectEntityDescription
-from homeassistant.const import CONF_ADDRESS
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.exceptions import HomeAssistantError, PlatformNotReady
-from pyairios.constants import ProductId, VMDBypassMode
+from homeassistant.exceptions import HomeAssistantError
+from pyairios.constants import VMDBypassMode
 from pyairios.exceptions import AiriosException
+from pyairios.properties import AiriosVMDProperty
 
-from .entity import AiriosEntity
+from .entity import (
+    AiriosEntity,
+    AiriosEntityDescription,
+    find_matching_subentry,
+)
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
 
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-    from pyairios.data_model import AiriosNodeData
-    from pyairios.models.vmd_02rps78 import VMD02RPS78
+    from pyairios.device import AiriosDevice
 
     from .coordinator import AiriosDataUpdateCoordinator
 
@@ -32,10 +35,11 @@ PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
-class AiriosSelectEntityDescription(SelectEntityDescription):
+class AiriosSelectEntityDescription(AiriosEntityDescription, SelectEntityDescription):
     """Airios select description."""
 
-    value_fn: Callable[[Any], str | None] | None = None
+    value_fn: Callable[[Any], str | None]
+    set_value_fn: Callable[[AiriosDevice, str], Awaitable[bool]]
 
 
 BYPASS_MODE_TO_NAME: dict[VMDBypassMode, str] = {
@@ -47,23 +51,25 @@ BYPASS_MODE_TO_NAME: dict[VMDBypassMode, str] = {
 NAME_TO_BYPASS_MODE = {value: key for (key, value) in BYPASS_MODE_TO_NAME.items()}
 
 
-def bypass_mode_value_fn(v: VMDBypassMode) -> str | None:
-    """Convert bypass mode to select's value."""
-    return BYPASS_MODE_TO_NAME.get(v)
+async def _set_bypass_mode_fn(dev: AiriosDevice, option: str) -> bool:
+    bypass_mode = NAME_TO_BYPASS_MODE[option]
+    return await dev.set(AiriosVMDProperty.REQUESTED_BYPASS_MODE, bypass_mode)
 
 
-VMD_SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
+SELECT_ENTITIES: tuple[AiriosSelectEntityDescription, ...] = (
     AiriosSelectEntityDescription(
-        key="bypass_mode",
+        ap=AiriosVMDProperty.BYPASS_MODE,
+        key=AiriosVMDProperty.BYPASS_MODE.name.casefold(),
         translation_key="bypass_mode",
         options=["close", "open", "auto"],
-        value_fn=bypass_mode_value_fn,
+        value_fn=BYPASS_MODE_TO_NAME.get,
+        set_value_fn=_set_bypass_mode_fn,
     ),
 )
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
+    hass: HomeAssistant,  # noqa: ARG001 # pylint: disable=unused-argument
     entry: ConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
@@ -71,32 +77,20 @@ async def async_setup_entry(
     coordinator: AiriosDataUpdateCoordinator = entry.runtime_data
 
     for modbus_address, node in coordinator.data.nodes.items():
-        # Find matching subentry
-        subentry_id = None
-        subentry = None
-        via = None
-        for se_id, se in entry.subentries.items():
-            if se.data[CONF_ADDRESS] == modbus_address:
-                subentry_id = se_id
-                subentry = se
-                via = entry
-
-        entities: list[AiriosSelectEntity] = []
-        if node["product_id"] is None or node["product_id"].value is None:
-            msg = "Node product ID not available"
-            raise PlatformNotReady(msg)
-
-        if node["product_id"].value == ProductId.VMD_02RPS78:
-            entities.extend(
-                [
-                    AiriosSelectEntity(description, coordinator, node, via, subentry)
-                    for description in VMD_SELECT_ENTITIES
-                ]
-            )
+        subentry = find_matching_subentry(entry, modbus_address)
+        entities: list[AiriosSelectEntity] = [
+            AiriosSelectEntity(description, coordinator, modbus_address, subentry)
+            for description in SELECT_ENTITIES
+            if description.ap in node
+        ]
+        subentry_id = subentry.subentry_id if subentry else None
         async_add_entities(entities, config_subentry_id=subentry_id)
 
 
-class AiriosSelectEntity(AiriosEntity, SelectEntity):
+class AiriosSelectEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
+    AiriosEntity,
+    SelectEntity,
+):
     """Airios select entity."""
 
     entity_description: AiriosSelectEntityDescription
@@ -105,13 +99,12 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
         self,
         description: AiriosSelectEntityDescription,
         coordinator: AiriosDataUpdateCoordinator,
-        node: AiriosNodeData,
-        via_config_entry: ConfigEntry | None,
+        modbus_address: int,
         subentry: ConfigSubentry | None,
     ) -> None:
         """Initialize a Airios select entity."""
-        super().__init__(description.key, coordinator, node, via_config_entry, subentry)
-        self.entity_description = description
+        super().__init__(description.key, coordinator, modbus_address, subentry)
+        self.entity_description = description  # type: ignore[override]
         self._attr_current_option = None
 
     async def _select_option_internal(self, option: str) -> bool:
@@ -119,14 +112,12 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
             return False
 
         try:
-            node = cast("VMD02RPS78", await self.api().node(self.modbus_address))
-            bypass_mode = NAME_TO_BYPASS_MODE[option]
-            ret = await node.set_bypass_mode(bypass_mode)
+            dev = await self.api().node(self.modbus_address)
+            ret = await self.entity_description.set_value_fn(dev, option)
         except AiriosException as ex:
-            msg = f"Failed to set bypass mode {option}"
+            msg = f"Failed to set {self.entity_description.key} to {option}"
             raise HomeAssistantError(msg) from ex
-        else:
-            return ret
+        return ret
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
@@ -137,30 +128,12 @@ class AiriosSelectEntity(AiriosEntity, SelectEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle update data from the coordinator."""
-        _LOGGER.debug(
-            "Handle update for node %s select %s",
-            f"{self.rf_address}",
-            self.entity_description.key,
-        )
         try:
-            device = self.coordinator.data.nodes[self.modbus_address]
-            result = device[self.entity_description.key]  # type: ignore[literal-required]
-            _LOGGER.debug(
-                "Node %s, select %s, result %s",
-                f"0x{self.rf_address:08X}",
-                self.entity_description.key,
-                result,
-            )
-            if result is not None and result.value is not None:
-                if self.entity_description.value_fn:
-                    self._attr_current_option = self.entity_description.value_fn(
-                        result.value
-                    )
-                else:
-                    self._attr_current_option = result.value
-                self._attr_available = self._attr_current_option is not None
-                if result.status is not None:
-                    self.set_extra_state_attributes_internal(result.status)
+            result = self.fetch_result()
+            self._attr_current_option = self.entity_description.value_fn(result.value)
+            self._attr_available = self._attr_current_option is not None
+            if result.status is not None:
+                self.set_extra_state_attributes_internal(result.status)
         except (TypeError, ValueError):
             _LOGGER.exception(
                 "Failed to update node %s select %s",

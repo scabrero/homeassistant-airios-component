@@ -65,3 +65,10 @@ warn_unused_configs = true
 
 [tool.ruff]
 line-length = 100
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = [
+  "duplicate-code",
+  "abstract-method",
+  "unexpected-keyword-arg",
+]

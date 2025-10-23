@@ -41,7 +41,7 @@ class AiriosDataUpdateCoordinator(DataUpdateCoordinator[AiriosData]):
         """Fetch state by polling API and forward it to Home Assistant."""
         _LOGGER.debug("Updating HA data state cache")
         try:
-            return await self.api.fetch()
+            return await self.api.fetch(with_status=False)
         except AiriosException as err:
             msg = "Error during state cache update"
             raise UpdateFailed(msg) from err

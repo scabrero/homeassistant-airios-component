@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import typing
+from dataclasses import dataclass
 
+from homeassistant.const import CONF_ADDRESS
 from homeassistant.exceptions import ConfigEntryNotReady, PlatformNotReady
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pyairios.properties import AiriosBaseProperty, AiriosDeviceProperty
 
 from .const import DEFAULT_NAME, DOMAIN
 from .coordinator import AiriosDataUpdateCoordinator
@@ -14,8 +18,27 @@ from .coordinator import AiriosDataUpdateCoordinator
 if typing.TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry, ConfigSubentry
     from pyairios import Airios
-    from pyairios.data_model import AiriosNodeData
     from pyairios.registers import Result, ResultStatus
+
+
+_LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, kw_only=True)
+class AiriosEntityDescription:
+    """Base class for Airios entities descriptions."""
+
+    ap: AiriosBaseProperty
+
+
+def find_matching_subentry(
+    entry: ConfigEntry, modbus_address: int
+) -> ConfigSubentry | None:
+    """Find matching subentry for entities."""
+    for se in entry.subentries.values():
+        if se.data[CONF_ADDRESS] == modbus_address:
+            return se
+    return None
 
 
 class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
@@ -31,35 +54,35 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         self,
         key: str,
         coordinator: AiriosDataUpdateCoordinator,
-        node: AiriosNodeData,
-        via_config_entry: ConfigEntry | None,
+        modbus_address: int,
         subentry: ConfigSubentry | None,
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
 
-        def node_attrib(attrib: Result, attrib_name: str) -> str | int:
-            if attrib is None or (not isinstance(attrib, int) and attrib.value is None):
-                _msg = f"Node {attrib_name} not available"
-                raise PlatformNotReady(_msg)
-            if isinstance(attrib, int):
-                return attrib
-            return attrib.value
+        self.modbus_address = modbus_address
 
-        self.modbus_address = node["slave_id"]
-        # in pymodbus>=3.11 keyword "device_id". prop name not refactored in pyairios
+        data = coordinator.data.nodes[modbus_address]
 
-        result = node["rf_address"]
-        self.rf_address = node_attrib(result, "RF address")
+        if AiriosDeviceProperty.RF_ADDRESS not in data:
+            msg = "Node RF address not available"
+            raise PlatformNotReady(msg)
+        self.rf_address = data[AiriosDeviceProperty.RF_ADDRESS].value
 
-        result = node["product_name"]
-        product_name = node_attrib(result, "product name")
+        if AiriosDeviceProperty.PRODUCT_NAME not in data:
+            msg = "Node product name not available"
+            raise PlatformNotReady(msg)
+        product_name = data[AiriosDeviceProperty.PRODUCT_NAME].value
 
-        result = node["product_id"]
-        product_id = node_attrib(result, "product ID")
+        if AiriosDeviceProperty.PRODUCT_ID not in data:
+            msg = "Node product ID not available"
+            raise PlatformNotReady(msg)
+        product_id = data[AiriosDeviceProperty.PRODUCT_ID].value
 
-        result = node["sw_version"]
-        sw_version = node_attrib(result, "software version")
+        if AiriosDeviceProperty.SOFTWARE_VERSION not in data:
+            msg = "Node software version not available"
+            raise PlatformNotReady(msg)
+        sw_version = data[AiriosDeviceProperty.SOFTWARE_VERSION].value
 
         if self.coordinator.config_entry is None:
             msg = "Unexpected error, config entry not defined"
@@ -68,7 +91,6 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         if not product_name:
             product_name = f"0x{self.rf_address:06X}"
 
-        name: str | None = None
         if subentry is None:
             name = product_name
         else:
@@ -87,13 +109,16 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             sw_version=f"0x{sw_version:04X}",
         )
 
-        if via_config_entry is not None:
-            if via_config_entry.unique_id is None:
-                msg = "Failed to get config entry unique id"
-                raise ConfigEntryNotReady(msg)
-            self._attr_device_info["via_device"] = (DOMAIN, via_config_entry.unique_id)
+        if (
+            (r1 := coordinator.data.nodes.get(coordinator.data.bridge_key))
+            and (r2 := r1.get(AiriosDeviceProperty.RF_ADDRESS))
+            and (brdg_rf_address := r2.value)
+            and (brdg_rf_address != self.rf_address)
+        ):
+            self._attr_device_info["via_device"] = (DOMAIN, str(brdg_rf_address))
 
         self._attr_unique_id = f"{self.rf_address}-{key}"
+        _LOGGER.debug("Entity %s has unique id %s", key, self._attr_unique_id)
 
     def api(self) -> Airios:
         """Return the Airios API."""
@@ -106,3 +131,29 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             "source": str(status.source),
             "flags": str(status.flags),
         }
+
+    def fetch_result(self) -> Result:
+        """Fetch result for entity."""
+        _LOGGER.debug(
+            "Updating node=%s, property=%s",
+            f"{self.rf_address}:08X",
+            self.entity_description.key,
+        )
+
+        if not isinstance(self.entity_description, AiriosEntityDescription):
+            msg = "Expected Airios entity description"
+            raise TypeError(msg)
+
+        ap = typing.cast("AiriosEntityDescription", self.entity_description).ap
+        data = self.coordinator.data.nodes[self.modbus_address]
+        result = data[ap]
+        _LOGGER.debug(
+            "Node=%s, property=%s, result=%s",
+            f"0x{self.rf_address:08X}",
+            self.entity_description.key,
+            result,
+        )
+        if result is None or result.value is None:
+            msg = f"{self.entity_description.key} result not exists"
+            raise ValueError(msg)
+        return result
