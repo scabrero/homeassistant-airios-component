@@ -101,8 +101,7 @@
           "data": {
             "name": "Name",
             "device": "Product to bind",
-            "rf_address": "Serial Number (optional)",
-            "controller_serial_number": "Controller to bind the accessory to"
+            "address": "Controller to bind the accessory to"
           }
         },
         "do_bind_accessory": {
