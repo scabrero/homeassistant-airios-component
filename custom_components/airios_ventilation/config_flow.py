@@ -32,6 +32,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from pyairios import Airios
 from pyairios.client import AiriosRtuTransport, AiriosTcpTransport
 from pyairios.constants import AiriosDeviceType, BindingStatus, ProductId
@@ -562,6 +563,29 @@ class AccessorySubentryFlowHandler(ConfigSubentryFlow):
             for subentry in config_entry.subentries.values()
             if subentry.subentry_type == "controller"
         }
+
+        # Update bound controllers from api in case subentry is not available, possibly
+        # when configuring the integration and devices are already bound to the RF
+        # bridge.
+        coordinator: AiriosDataUpdateCoordinator = config_entry.runtime_data
+        api_bound_nodes = {
+            dev.modbus_address: ", ".join(dev.description)
+            for dev in await coordinator.api.nodes()
+            if dev.type == AiriosDeviceType.CONTROLLER
+            and dev.modbus_address not in bound_controllers
+        }
+
+        # Get the name from device registry for user convenience.
+        registry = dr.async_get(self.hass)
+        for key in api_bound_nodes:
+            if regdev := registry.async_get_device(identifiers={(DOMAIN, str(key))}):
+                if regdev.name_by_user:
+                    api_bound_nodes[key] = regdev.name_by_user
+                elif regdev.name:
+                    api_bound_nodes[key] = regdev.name
+
+        bound_controllers.update(api_bound_nodes)
+
         if user_input is not None:
             self._name = user_input[CONF_NAME]
             self._bind_controller_modbus_address = user_input[CONF_ADDRESS]
