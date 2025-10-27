@@ -134,10 +134,12 @@
       "init": {
         "title": "Airios integration options",
         "data": {
-          "scan_interval": "Scan interval (seconds)"
+          "scan_interval": "Scan interval (seconds)",
+          "fetch_result_status": "Fetch result metadata"
         },
         "data_description": {
-          "scan_interval": "Poll interval in seconds"
+          "scan_interval": "Poll interval in seconds",
+          "fetch_result_status": "Fetch the metadata associated to each device register value. Enabling this option significantly increses device poll time."
         }
       }
     }

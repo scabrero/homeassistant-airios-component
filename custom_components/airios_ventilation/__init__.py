@@ -25,7 +25,14 @@ from pyairios.client import (
 )
 from pyairios.properties import AiriosDeviceProperty
 
-from .const import DEFAULT_NAME, DEFAULT_SCAN_INTERVAL, DOMAIN, BridgeType
+from .const import (
+    CONF_FETCH_RESULT_STATUS,
+    DEFAULT_FETCH_RESULT_STATUS,
+    DEFAULT_NAME,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    BridgeType,
+)
 from .coordinator import AiriosDataUpdateCoordinator
 
 if typing.TYPE_CHECKING:
@@ -93,9 +100,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     modbus_address = entry.data[CONF_ADDRESS]
     api = Airios(transport, modbus_address)
 
-    update_interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
-    coordinator = AiriosDataUpdateCoordinator(hass, api, update_interval)
-    await coordinator.async_config_entry_first_refresh()  # forwards node data to HA
+    coordinator = AiriosDataUpdateCoordinator(
+        hass,
+        api,
+        update_interval=entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
+        fetch_result_status=entry.options.get(
+            CONF_FETCH_RESULT_STATUS, DEFAULT_FETCH_RESULT_STATUS
+        ),
+    )
+    await coordinator.async_config_entry_first_refresh()
 
     (rf_address, product_id, product_name, sw_version) = _get_bridge_data(
         coordinator.data.nodes[coordinator.data.bridge_key]

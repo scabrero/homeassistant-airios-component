@@ -45,7 +45,9 @@ from .const import (
     CONF_DEFAULT_NETWORK_MODBUS_ADDRESS,
     CONF_DEFAULT_PORT,
     CONF_DEFAULT_SERIAL_MODBUS_ADDRESS,
+    CONF_FETCH_RESULT_STATUS,
     CONF_RF_ADDRESS,
+    DEFAULT_FETCH_RESULT_STATUS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     BridgeType,
@@ -348,13 +350,17 @@ class OptionsFlowHandler(OptionsFlow):
         scan_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
+        fetch_result = self.config_entry.options.get(
+            CONF_FETCH_RESULT_STATUS, DEFAULT_FETCH_RESULT_STATUS
+        )
 
         # Ethernet bridge closes connection when no communication for 3 mins
         opts_schema = vol.Schema(
             {
                 vol.Required(CONF_SCAN_INTERVAL, default=scan_interval): vol.All(
                     vol.Coerce(int), vol.Range(min=15, max=150)
-                )
+                ),
+                vol.Required(CONF_FETCH_RESULT_STATUS, default=fetch_result): bool,
             }
         )
         return self.async_show_form(step_id="init", data_schema=opts_schema)
