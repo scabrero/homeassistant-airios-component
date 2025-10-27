@@ -22,11 +22,15 @@ _LOGGER = logging.getLogger(__name__)
 class AiriosDataUpdateCoordinator(DataUpdateCoordinator[AiriosData]):
     """The Airios data update coordinator."""
 
+    fetch_result_status: bool
+
     def __init__(
         self,
         hass: HomeAssistant,
         api: Airios,
         update_interval: int,
+        *,
+        fetch_result_status: bool,
     ) -> None:
         """Initialize the Airios data coordinator."""
         super().__init__(
@@ -36,12 +40,13 @@ class AiriosDataUpdateCoordinator(DataUpdateCoordinator[AiriosData]):
             update_interval=datetime.timedelta(seconds=update_interval),
         )
         self.api = api
+        self.fetch_result_status = fetch_result_status
 
     async def _async_update_data(self) -> AiriosData:
         """Fetch state from API."""
         _LOGGER.debug("Updating data state cache")
         try:
-            return await self.api.fetch(with_status=False)
+            return await self.api.fetch(with_status=self.fetch_result_status)
         except AiriosException as err:
             msg = "Error during state cache update"
             raise UpdateFailed(msg) from err
