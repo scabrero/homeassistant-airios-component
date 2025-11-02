@@ -371,11 +371,34 @@
     },
     "device_reset": {
       "name": "Reset the device",
-      "description": "Resets the device preserving the configuration."
+      "description": "Resets the device preserving the configuration.",
+      "fields": {
+        "device_id": {
+          "description": "The Airios device to reset",
+          "name": "Target device"
+        }
+      }
     },
     "factory_reset": {
       "name": "Factory reset the device",
-      "description": "Resets the device to factory state."
+      "description": "Resets the device to factory state.",
+      "fields": {
+        "device_id": {
+          "description": "The Airios device to reset",
+          "name": "Target device"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_device_entry": {
+      "message": "Airios service {service_name} error: device not found in device registry."
+    },
+    "invalid_bridge_rf_address": {
+      "message": "Airios service {service_name} error: Invalid bridge RF address {rf_address}."
+    },
+    "invalid_config_entry": {
+      "message": "Airios service {service_name} error: Config entry not found or not loaded."
     }
   }
 }

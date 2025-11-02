@@ -34,9 +34,11 @@ from .const import (
     BridgeType,
 )
 from .coordinator import AiriosDataUpdateCoordinator
+from .services import async_setup_services
 
 if typing.TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.typing import ConfigType
     from pyairios.constants import ProductId
     from pyairios.data_model import AiriosDeviceData
 
@@ -53,6 +55,15 @@ PLATFORMS: list[Platform] = [
 
 
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
+
+
+async def async_setup(
+    hass: HomeAssistant,
+    config: ConfigType,  # noqa: ARG001 # pylint: disable=unused-argument
+) -> bool:
+    """Set up integration services."""
+    async_setup_services(hass)
+    return True
 
 
 def _get_transport(entry: AiriosConfigEntry) -> AiriosBaseTransport:

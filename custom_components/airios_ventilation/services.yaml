@@ -1,19 +1,21 @@
 factory_reset:
-  target:
-    device:
-      integration: airios_ventilation
-      model: BRDG-02R13
-    entity:
-      integration: airios_ventilation
-      device_class: duration
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            - integration: airios_ventilation
+              model: BRDG-02R13
 device_reset:
-  target:
-    device:
-      integration: airios_ventilation
-      model: BRDG-02R13
-    entity:
-      integration: airios_ventilation
-      device_class: duration
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          filter:
+            - integration: airios_ventilation
+              model: BRDG-02R13
 filter_reset:
   target:
     entity:
