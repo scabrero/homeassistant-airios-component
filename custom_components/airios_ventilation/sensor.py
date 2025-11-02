@@ -316,11 +316,12 @@ class AiriosSensorEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             self._attr_available = self._attr_native_value is not None
             if result.status is not None:
                 self.set_extra_state_attributes_internal(result.status)
-        except (TypeError, ValueError):
-            _LOGGER.exception(
-                "Failed to update node %s sensor %s",
+        except (TypeError, ValueError) as ex:
+            _LOGGER.info(
+                "Failed to update sensor entity for node=%s, property=%s: %s",
                 f"0x{self.rf_address:08X}",
                 self.entity_description.key,
+                ex,
             )
             self._attr_native_value = None
             self._attr_available = False

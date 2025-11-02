@@ -179,11 +179,12 @@ class AiriosNumberEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             self._attr_available = self._attr_native_value is not None
             if result.status is not None:
                 self.set_extra_state_attributes_internal(result.status)
-        except (TypeError, ValueError):
-            _LOGGER.exception(
-                "Failed to update node %s number %s",
-                f"0x{self.rf_address:08X}",
+        except (TypeError, ValueError) as ex:
+            _LOGGER.info(
+                "Failed to update number entity for node=%s, property=%s: %s",
+                f"0x{self.rf_address:06X}",
                 self.entity_description.key,
+                ex,
             )
             self._attr_current_option = None
             self._attr_available = False
