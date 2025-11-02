@@ -133,11 +133,12 @@ class AiriosBinarySensorEntity(  # pyright: ignore[reportIncompatibleVariableOve
             self._attr_available = True
             if result.status is not None:
                 self.set_extra_state_attributes_internal(result.status)
-        except (TypeError, ValueError):
-            _LOGGER.exception(
-                "Failed to update binary sensor, node=%s, property=%s",
-                f"0x{self.rf_address:08X}",
+        except (TypeError, ValueError) as ex:
+            _LOGGER.info(
+                "Failed to update binary sensor entity for node=%s, property=%s: %s",
+                f"0x{self.rf_address:06X}",
                 self.entity_description.key,
+                ex,
             )
             self._attr_is_on = None
             self._attr_available = False
