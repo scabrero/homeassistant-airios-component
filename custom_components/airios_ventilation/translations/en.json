@@ -292,6 +292,11 @@
       "frost_protection_preheater_setpoint": {
         "name": "Frost protection preheater setpoint"
       }
+    },
+    "switch": {
+      "basic_vent_enable_sw": {
+        "name": "Base ventilation"
+      }
     }
   },
   "services": {
