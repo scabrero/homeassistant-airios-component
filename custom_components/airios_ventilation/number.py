@@ -13,9 +13,9 @@ from homeassistant.components.number import (
     NumberMode,
 )
 from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
     EntityCategory,
     UnitOfTemperature,
-    CONCENTRATION_PARTS_PER_MILLION,
 )
 from homeassistant.core import HomeAssistant, callback
 from pyairios.properties import AiriosVMDProperty
