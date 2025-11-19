@@ -200,6 +200,13 @@
       },
       "defrost": {
         "name": "Defrost"
+      },
+      "basic_vent_enable": {
+        "name": "Base ventilation",
+        "state": {
+          "off": "Off",
+          "on": "On"
+        }
       }
     },
     "button": {
@@ -247,6 +254,12 @@
       "exhaust_fan_speed": {
         "name": "Exhaust fan speed"
       },
+      "co2_level": {
+        "name": "Current CO2 level"
+      },
+      "co2_setpoint": {
+        "name": "CO2 Setpoint"
+      },
       "error_code": {
         "name": "Error code",
         "state": {
@@ -291,6 +304,9 @@
       },
       "frost_protection_preheater_setpoint": {
         "name": "Frost protection preheater setpoint"
+      },
+      "co2_setpoint": {
+        "name": "CO2 setpoint"
       }
     },
     "switch": {

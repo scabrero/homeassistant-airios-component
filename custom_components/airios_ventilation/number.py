@@ -12,7 +12,11 @@ from homeassistant.components.number import (
     NumberEntityDescription,
     NumberMode,
 )
-from homeassistant.const import EntityCategory, UnitOfTemperature
+from homeassistant.const import (
+    EntityCategory,
+    UnitOfTemperature,
+    CONCENTRATION_PARTS_PER_MILLION,
+)
 from homeassistant.core import HomeAssistant, callback
 from pyairios.properties import AiriosVMDProperty
 
@@ -56,6 +60,11 @@ async def set_frost_protection_preheater_setpoint(
 ) -> bool:
     """Set the preheater setpoint."""
     return await vmd.set(AiriosVMDProperty.FROST_PROTECTION_PREHEATER_SETPOINT, value)
+
+
+async def set_co2_setpoint(vmd: AiriosDevice, value: int) -> bool:
+    """Set the CO2 setpoint."""
+    return await vmd.set(AiriosVMDProperty.CO2_CONTROL_SETPOINT, value)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -115,6 +124,19 @@ NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
         entity_category=EntityCategory.CONFIG,
         mode=NumberMode.BOX,
         set_value_fn=set_free_ventilation_cooling_offset,
+    ),
+    # VMD07-RP13 specific
+    AiriosNumberEntityDescription(
+        ap=AiriosVMDProperty.CO2_CONTROL_SETPOINT,
+        key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
+        translation_key="co2_setpoint",
+        native_min_value=400,
+        native_max_value=2000,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_step=1,
+        entity_category=EntityCategory.CONFIG,
+        mode=NumberMode.BOX,
+        set_value_fn=set_co2_setpoint,
     ),
 )
 
