@@ -62,7 +62,7 @@ async def set_frost_protection_preheater_setpoint(
     return await vmd.set(AiriosVMDProperty.FROST_PROTECTION_PREHEATER_SETPOINT, value)
 
 
-async def set_co2_setpoint(vmd: AiriosDevice, value: int) -> bool:
+async def set_co2_setpoint(vmd: AiriosDevice, value: float) -> bool:
     """Set the CO2 setpoint."""
     return await vmd.set(AiriosVMDProperty.CO2_CONTROL_SETPOINT, value)
 
@@ -131,7 +131,7 @@ NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
         key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
         translation_key="co2_setpoint",
         native_min_value=400,
-        native_max_value=2000,
+        native_max_value=2300,
         native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
         native_step=1,
         entity_category=EntityCategory.CONFIG,
