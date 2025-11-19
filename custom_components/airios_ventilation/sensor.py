@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     EntityCategory,
@@ -23,6 +24,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from pyairios.constants import (
     VMDBypassPosition,
+    VMDCO2Level,
     VMDErrorCode,
     VMDHeater,
     VMDHeaterStatus,
@@ -98,6 +100,13 @@ def bypass_position_value_fn(v: VMDBypassPosition) -> StateType:
     """Convert VMDTemperature to sensor's value."""
     if not v.error:
         return v.position
+    return None
+
+
+def co2_value_fn(v: VMDCO2Level) -> StateType:
+    """Convert VMDCO2Level to sensor's value."""
+    if v.status == VMDSensorStatus.OK:
+        return v.co2
     return None
 
 
@@ -281,6 +290,23 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTime.MINUTES,
         value_fn=override_remaining_time_value_fn,
+    ),
+    # VMD07-RP13 specific
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.CO2_LEVEL,
+        key=AiriosVMDProperty.CO2_LEVEL.name.casefold(),
+        translation_key="co2_level",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        value_fn=co2_value_fn,
+    ),
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.CO2_CONTROL_SETPOINT,
+        key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
+        translation_key="co2_setpoint",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 

@@ -99,6 +99,13 @@ BINARY_SENSOR_ENTITIES: tuple[AiriosBinarySensorEntityDescription, ...] = (
         device_class=BinarySensorDeviceClass.PROBLEM,
         value_fn=_battery_status_value_fn,
     ),
+    # VMD07-RP13 specific
+    AiriosBinarySensorEntityDescription(
+        ap=AiriosVMDProperty.BASIC_VENTILATION_ENABLE,
+        key=AiriosVMDProperty.BASIC_VENTILATION_ENABLE.name.casefold(),
+        translation_key="basic_vent_enable",
+        device_class=BinarySensorDeviceClass.RUNNING,
+    ),
 )
 
 
