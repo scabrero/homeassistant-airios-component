@@ -53,6 +53,7 @@
   },
   "config_subentries": {
     "controller": {
+      "entry_type": "Controller",
       "initiate_flow": {
         "user": "Bind a controller"
       },
@@ -91,6 +92,7 @@
       }
     },
     "accessory": {
+      "entry_type": "Accessory",
       "initiate_flow": {
         "user": "Bind an accessory"
       },
