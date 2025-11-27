@@ -16,6 +16,7 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
 from pyairios import Airios
 from pyairios.client import (
@@ -53,6 +54,9 @@ PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.SWITCH,
 ]
+
+# pylint: disable=invalid-name
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 type AiriosConfigEntry = ConfigEntry[AiriosDataUpdateCoordinator]
 
