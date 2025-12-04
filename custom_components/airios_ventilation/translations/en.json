@@ -141,7 +141,7 @@
         },
         "data_description": {
           "scan_interval": "Poll interval in seconds",
-          "fetch_result_status": "Fetch the metadata associated to each device register value. Enabling this option significantly increses device poll time."
+          "fetch_result_status": "Fetch the metadata associated with each device register value. Enabling this option significantly increases device poll time."
         }
       }
     }

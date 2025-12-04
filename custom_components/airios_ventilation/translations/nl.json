@@ -1,0 +1,427 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "menu_options": {
+          "serial": "Serieel",
+          "network": "Ethernet"
+        },
+        "title": "Type RF bridge"
+      },
+      "network": {
+        "title": "Stel Ethernet RF bridge in",
+        "data": {
+          "host": "Host",
+          "port": "Poort",
+          "address": "Modbus device-adres"
+        },
+        "data_description": {
+          "host": "Hostnaam of IP-adres van de RF bridge",
+          "port": "De poort waarop de Modbus server luistert",
+          "address": "Het adres van het Modbus-apparaat"
+        }
+      },
+      "serial": {
+        "title": "Stel seriële RF bridge in",
+        "data": {
+          "device": "Selecteer de bridge",
+          "address": "Modbus device-adres"
+        },
+        "data_description": {
+          "device": "De seriële poort waar de bridge op is aangesloten",
+          "address": "Het adres van het Modbus-apparaat"
+        }
+      },
+      "serial_manual_path": {
+        "data": {
+          "device": "USB device-pad"
+        },
+        "title": "Pad"
+      }
+    },
+    "error": {
+      "unexpected_product_id": "Onverwacht product-ID",
+      "cannot_connect": "Verbinden mislukt",
+      "unknown": "Onverwachte fout"
+    },
+    "abort": {
+      "already_in_progress": "Configuratie-flow is al bezig",
+      "already_configured": "Bridge is al geconfigureerd",
+      "reconfigure_successful": "Herconfiguratie gelukt",
+      "unique_id_mismatch": "Controleer of je wel dezelfde bridge instelt."
+    }
+  },
+  "config_subentries": {
+    "controller": {
+      "entry_type": "Controller",
+      "initiate_flow": {
+        "user": "Koppel een controller"
+      },
+      "step": {
+        "user": {
+          "title": "Koppel een controller",
+          "description": "Een controller is normaal gesproken een ventilatie-unit.",
+          "data": {
+            "name": "Naam",
+            "device": "Product om te koppelen",
+            "rf_address": "Serienummer (optioneel)"
+          }
+        },
+        "do_bind_controller": {
+          "title": "Koppelen bezig"
+        }
+      },
+      "progress": {
+        "bind_controller": "Wacht totdat de bridge met de controller is gekoppeld."
+      },
+      "abort": {
+        "not_available": "Koppelstatus niet beschikbaar",
+        "outgoing_binding_initialized": "Koppelen bezig",
+        "outgoing_binding_completed": "Koppelen voltooid",
+        "incoming_binding_active": "Koppelen bezig",
+        "incoming_binding_completed": "Koppelen voltooid",
+        "outgoing_binding_failed_no_answer": "Koppelen mislukt, geen reactie",
+        "outgoing_binding_failed_incompatible_device": "Koppelen mislukt, ongeschikt device",
+        "outgoing_binding_failed_node_list_full": "Koppelen mislukt, node-lijst is vol",
+        "outgoing_binding_failed_modbus_address_invalid": "Koppelen mislukt, ongeldig Modbus-adres",
+        "incoming_binding_window_closed_without_binding_a_product": "Koppelen mislukt, geen reactie",
+        "binding_failed_serial_number_invalid": "Koppelen mislukt, ongeldig serienummer",
+        "unknown_binding_command": "Koppelen mislukt, onbekend koppelcommando",
+        "unknown_product_type": "Koppelen mislukt, onbekend product-ID",
+        "bind_failed": "Controller koppelen mislukt. Bekijk je logs."
+      }
+    },
+    "accessory": {
+      "entry_type": "Accessoire",
+      "initiate_flow": {
+        "user": "Koppel een accessoire"
+      },
+      "step": {
+        "user": {
+          "title": "Koppel een accessoire",
+          "description": "Een accessoire is een afstandsbediening of een sensor die al (direct) aan de controller is gekoppeld",
+          "data": {
+            "name": "Naam",
+            "device": "Te koppelen product",
+            "address": "Controller waaraan de accessoire gekoppeld moet worden"
+          }
+        },
+        "do_bind_accessory": {
+          "title": "Koppelen bezig"
+        }
+      },
+      "progress": {
+        "bind_accessory": "Waiting for accessory. Perform accessory binding procedure now."
+      },
+      "abort": {
+        "not_available": "Koppelstatus niet beschikbaar",
+        "outgoing_binding_initialized": "Koppelen bezig",
+        "outgoing_binding_completed": "Koppelen voltooid",
+        "incoming_binding_active": "Koppelen bezig",
+        "incoming_binding_completed": "Koppelen voltooid",
+        "outgoing_binding_failed_no_answer": "Koppelen mislukt, geen reactie",
+        "outgoing_binding_failed_incompatible_device": "Koppelen mislukt, ongeschikt device",
+        "outgoing_binding_failed_node_list_full": "Koppelen mislukt, node-lijst is vol",
+        "outgoing_binding_failed_modbus_address_invalid": "Koppelen mislukt, ongeldig Modbus-adres",
+        "incoming_binding_window_closed_without_binding_a_product": "Koppelen mislukt, geen reactie",
+        "binding_failed_serial_number_invalid": "Koppelen mislukt, ongeldig serienummer",
+        "unknown_binding_command": "Koppelen mislukt, onbekend koppelcommando",
+        "unknown_product_type": "Koppelen mislukt, onbekend product-ID",
+        "bind_failed": "Controller koppelen mislukt. Bekijk je logs.",
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Airios integratie-opties",
+        "data": {
+          "scan_interval": "Scan interval (secondes)",
+          "fetch_result_status": "Haal result metadata op"
+        },
+        "data_description": {
+          "scan_interval": "Poll-interval in secondes",
+          "fetch_result_status": "Haal ook de metadata op voor elke device-registerwaarde. Inschakelen vergroot de duur van elke device poll."
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "bypass_mode": {
+        "name": "Bypass-modus",
+        "state": {
+          "open": "Open",
+          "close": "Gesloten",
+          "auto": "Auto",
+          "error": "Fout"
+        }
+      }
+    },
+    "fan": {
+      "ventilation_speed": {
+        "name": "Ventilatiesnelheid",
+        "state_attributes": {
+          "preset_mode": {
+            "state": {
+              "off": "Uit",
+              "low": "Laag",
+              "medium": "Midden",
+              "high": "Hoog",
+              "low_override": "Laag (tijdelijke override)",
+              "medium_override": "Midden (tijdelijke override)",
+              "high_override": "Hoog (tijdelijke override)",
+              "away": "Afwezig",
+              "boost": "Boost",
+              "auto": "Auto"
+            }
+          }
+        }
+      }
+    },
+    "binary_sensor": {
+      "fault_status": {
+        "name": "Foutstatus"
+      },
+      "rf_comm_status": {
+        "name": "RF comm status"
+      },
+      "battery_status": {
+        "name": "Batterijstatus",
+        "state": {
+          "off": "OK",
+          "on": "Batterij laag"
+        }
+      },
+      "filter_dirty": {
+        "name": "Filter",
+        "state": {
+          "off": "OK",
+          "on": "Vuil"
+        }
+      },
+      "defrost": {
+        "name": "Ontdooien"
+      },
+      "basic_vent_enable": {
+        "name": "Basisventilatie",
+        "state": {
+          "off": "Uit",
+          "on": "Aan"
+        }
+      }
+    },
+    "button": {
+      "filter_reset": {
+        "name": "Reset filterteller"
+      }
+    },
+    "sensor": {
+      "rf_load_last_hour": {
+        "name": "RF-last afgelopen uur"
+      },
+      "rf_load_current_hour": {
+        "name": "RF-last"
+      },
+      "rf_sent_messages_last_hour": {
+        "name": "RF-berichten afgelopen uur"
+      },
+      "rf_sent_messages_current_hour": {
+        "name": "RF-berichten"
+      },
+      "power_on_time": {
+        "name": "Uptime"
+      },
+      "indoor_air_temperature": {
+        "name": "Binnentemperatuur"
+      },
+      "outdoor_air_temperature": {
+        "name": "Buitentemperatuur"
+      },
+      "exhaust_air_temperature": {
+        "name": "Afvoertemperatuur"
+      },
+      "supply_air_temperature": {
+        "name": "Aanvoertemperatuur"
+      },
+      "exhaust_fan_rpm": {
+        "name": "Toerental afvoerventilator"
+      },
+      "supply_fan_rpm": {
+        "name": "Toerental aanvoerventilator"
+      },
+      "supply_fan_speed": {
+        "name": "Snelheid aanvoerventilator"
+      },
+      "exhaust_fan_speed": {
+        "name": "Snelheid afvoerventilator"
+      },
+      "co2_level": {
+        "name": "Huidig CO2-niveau"
+      },
+      "co2_setpoint": {
+        "name": "Doelwaarde CO2"
+      },
+      "error_code": {
+        "name": "Foutcode",
+        "state": {
+          "no_error": "Geen fouten",
+          "non_specific_fault": "Niet-specifieke fout",
+          "emergency_stop": "Noodstop",
+          "fan_1_error": "Fan 1 fout",
+          "fan_2_error": "Fan 2 fout",
+          "x20_sensor_error": "X20 sensorfout",
+          "x21_sensor_error": "X21 sensorfout",
+          "x22_sensor_error": "X22 sensorfout",
+          "x23_sensor_error": "X23 sensorfout",
+          "binding_mode_active": "Koppelmodus actief",
+          "identification_active": "Identificatie actief"
+        }
+      },
+      "filter_duration_days": {
+        "name": "Filterduur"
+      },
+      "filter_remaining_percent": {
+        "name": "Filter te resterend"
+      },
+      "bypass_position": {
+        "name": "Bypasspositie"
+      },
+      "postheater": {
+        "name": "Naverwarmen"
+      },
+      "override_remaining_time": {
+        "name": "Tijdelijke override resterende tijd"
+      }
+    },
+    "number": {
+      "preheater_setpoint": {
+        "name": "Doelwaarde voorverwarmen"
+      },
+      "free_ventilation_setpoint": {
+        "name": "Doelwaarde vrij ventileren"
+      },
+      "free_ventilation_cooling_offset": {
+        "name": "Offset vrij ventileren koelen"
+      },
+      "frost_protection_preheater_setpoint": {
+        "name": "Doelwaarde vorstbescherming voorverwarmen"
+      },
+      "co2_setpoint": {
+        "name": "Doelwaarde CO2"
+      }
+    },
+    "switch": {
+      "basic_vent_enable_sw": {
+        "name": "Basisventilatie"
+      }
+    }
+  },
+  "services": {
+    "set_preset_mode_duration": {
+      "name": "Stel standaardwaarde in voor bepaalde tijd",
+      "description": "Stel voor een bepaalde tijd een preset in. Het apparaat zal daarna teruggaan naar de oorspronkelijke preset.",
+      "fields": {
+        "preset_mode": {
+          "name": "Naam preset",
+          "description": "Naam van de voorinstelling"
+        },
+        "preset_override_time": {
+          "name": "Duur",
+          "description": "Looptijd van de tijdelijke aanpassing"
+        }
+      }
+    },
+    "set_preset_fan_speed_away": {
+      "name": "Stel ventilatorsnelheden in voor preset Afwezig",
+      "description": "Stel de snelheid van de aan- en afvoerventilatoren in voor de Away preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Aanvoer",
+          "description": "Snelheid Aanvoerfan"
+        },
+        "exhaust_fan_speed": {
+          "name": "Afvoer",
+          "description": "Snelheid Afvoerfan"
+        }
+      }
+    },
+    "set_preset_fan_speed_low": {
+      "name": "Stel snelheden in voor preset Laag",
+      "description": "Stel de snelheid van de aan- en afvoerventilatoren in voor de Low preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Aanvoer",
+          "description": "Snelheid Aanvoerfan"
+        },
+        "exhaust_fan_speed": {
+          "name": "Afvoer",
+          "description": "Snelheid Afvoerfan"
+        }
+      }
+    },
+    "set_preset_fan_speed_medium": {
+      "name": "Stel ventilatorsnelheden in voor preset Midden",
+      "description": "Stel de snelheid van de aan- en afvoerventilatoren in voor de Medium preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Aanvoer",
+          "description": "Snelheid Aanvoerfan"
+        },
+        "exhaust_fan_speed": {
+          "name": "Afvoer",
+          "description": "Snelheid Afvoerfan"
+        }
+      }
+    },
+    "set_preset_fan_speed_high": {
+      "name": "Stel ventilatorsnelheden in voor preset Hoog",
+      "description": "Stel de snelheid van de aan- en afvoerventilatoren in voor de High preset.",
+      "fields": {
+        "supply_fan_speed": {
+          "name": "Aanvoer",
+          "description": "Snelheid Aanvoerfan"
+        },
+        "exhaust_fan_speed": {
+          "name": "Afvoer",
+          "description": "Snelheid Afvoerfan"
+        }
+      }
+    },
+    "filter_reset": {
+      "name": "Reset filterteller",
+      "description": "Zet de filterteller terug na het vervangen of schoonmaken van de filters."
+    },
+    "device_reset": {
+      "name": "Reset apparaat",
+      "description": "Zet het apparaat terug met behoud van de configuratie.",
+      "fields": {
+        "device_id": {
+          "description": "Het Airios-apparaat dat wordt gereset",
+          "name": "Doelapparaat"
+        }
+      }
+    },
+    "factory_reset": {
+      "name": "Zet terug naar fabrieksinstellingen",
+      "description": "Zet het apparaat terug naar fabrieksinstellingen.",
+      "fields": {
+        "device_id": {
+          "description": "Het Airios-apparaat dat wordt gereset",
+          "name": "Doelapparaat"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "invalid_device_entry": {
+      "message": "Airios service {service_name} fout: apparaat niet gevonden in het deviceregister."
+    },
+    "invalid_bridge_rf_address": {
+      "message": "Airios service {service_name} fout: Ongeldig RF-adres voor bridge: {rf_address}."
+    },
+    "invalid_config_entry": {
+      "message": "Airios service {service_name} fout: Configuratie niet gevonden of niet geladen."
+    }
+  }
+}
