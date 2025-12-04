@@ -127,7 +127,7 @@
         "binding_failed_serial_number_invalid": "Koppelen mislukt, ongeldig serienummer",
         "unknown_binding_command": "Koppelen mislukt, onbekend koppelcommando",
         "unknown_product_type": "Koppelen mislukt, onbekend product-ID",
-        "bind_failed": "Controller koppelen mislukt. Bekijk je logs.",
+        "bind_failed": "Controller koppelen mislukt. Bekijk je logs."
       }
     }
   },
