@@ -97,7 +97,7 @@ def temperature_value_fn(v: VMDTemperature) -> StateType:
 
 
 def bypass_position_value_fn(v: VMDBypassPosition) -> StateType:
-    """Convert VMDTemperature to sensor's value."""
+    """Convert VMDBypassPosition to sensor's value."""
     if not v.error:
         return v.position
     return None
@@ -293,6 +293,14 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
     # VMD07-RP13 specific
     AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.CO2_LEVEL,
+        key=AiriosVMDProperty.CO2_LEVEL.name.casefold(),
+        translation_key="co2_level",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        value_fn=co2_value_fn,
+    ),
+    AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.HUMIDITY_INDOOR,
         key=AiriosVMDProperty.HUMIDITY_INDOOR.name.casefold(),
         translation_key = "indoor_humidity",
@@ -306,7 +314,16 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         state_class = SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
     ),
-    # VMDVentilationMode, VMDVentilationSpeed
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.VMDVentilationMode,
+        key=AiriosVMDProperty.VMDVentilationMode.name.casefold(),
+        translation_key="ventilation_mode",
+    ),
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.VMDVentilationSpeed,
+        key=AiriosVMDProperty.VMDVentilationSpeed.name.casefold(),
+        translation_key="ventilation_speed",
+    ),
     AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.CO2_CONTROL_SETPOINT,
         key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
