@@ -302,8 +302,11 @@
       "ventilation_mode": {
         "name": "Ventilatiemodus"
       },
+      "ventilation_sub_mode": {
+        "name": "Ventilatiesubmodus"
+      },
       "ventilation_speed": {
-        "name": "Ventilatiestand"
+        "name": "Ventilatiesnelheid"
       }
     },
     "number": {
