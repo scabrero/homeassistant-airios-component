@@ -311,6 +311,7 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key=AiriosVMDProperty.HUMIDITY_INDOOR.name.casefold(),
         translation_key = "indoor_humidity",
         state_class = SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
         value_fn=humidity_fn,
     ),
     AiriosSensorEntityDescription(
@@ -318,6 +319,7 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key=AiriosVMDProperty.HUMIDITY_OUTDOOR.name.casefold(),
         translation_key = "outdoor_humidity",
         state_class = SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
         value_fn=humidity_fn,
     ),
     AiriosSensorEntityDescription(
