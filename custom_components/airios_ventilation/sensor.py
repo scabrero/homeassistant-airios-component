@@ -30,6 +30,7 @@ from pyairios.constants import (
     VMDHeaterStatus,
     VMDSensorStatus,
     VMDTemperature,
+    VMDHumidity,
 )
 from pyairios.properties import (
     AiriosBridgeProperty,
@@ -123,6 +124,11 @@ def postheater_value_fn(v: VMDHeater) -> StateType:
         return v.level
     return None
 
+def humidity_fn(v: VMDHumidity) -> StateType:
+    """Convert VMDHumidity to sensor's value 0-100."""
+    if v.status == VMDSensorStatus.OK:
+        return v.humidity
+    return None
 
 SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
@@ -305,23 +311,28 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key=AiriosVMDProperty.HUMIDITY_INDOOR.name.casefold(),
         translation_key = "indoor_humidity",
         state_class = SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=PERCENTAGE,
+        value_fn=humidity_fn,
     ),
     AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.HUMIDITY_OUTDOOR,
         key=AiriosVMDProperty.HUMIDITY_OUTDOOR.name.casefold(),
         translation_key = "outdoor_humidity",
         state_class = SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=PERCENTAGE,
+        value_fn=humidity_fn,
     ),
     AiriosSensorEntityDescription(
-        ap=AiriosVMDProperty.VMDVentilationMode,
-        key=AiriosVMDProperty.VMDVentilationMode.name.casefold(),
+        ap=AiriosVMDProperty.VENTILATION_MODE,
+        key=AiriosVMDProperty.VENTILATION_MODE.name.casefold(),
         translation_key="ventilation_mode",
     ),
     AiriosSensorEntityDescription(
-        ap=AiriosVMDProperty.VMDVentilationSpeed,
-        key=AiriosVMDProperty.VMDVentilationSpeed.name.casefold(),
+        ap=AiriosVMDProperty.VENTILATION_SUB_MODE,
+        key=AiriosVMDProperty.VENTILATION_SUB_MODE.name.casefold(),
+        translation_key="ventilation_sub_mode",
+    ),
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.CURRENT_VENTILATION_SPEED,
+        key=AiriosVMDProperty.CURRENT_VENTILATION_SPEED.name.casefold(),
         translation_key="ventilation_speed",
     ),
     AiriosSensorEntityDescription(
