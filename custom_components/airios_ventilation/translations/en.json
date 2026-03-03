@@ -284,6 +284,12 @@
       "filter_remaining_percent": {
         "name": "Filter remaining"
       },
+      "indoor_humidity": {
+        "name": "Indoor humidity"
+      },
+      "outdoor_humidity": {
+        "name": "Outdoor humidity"
+      },
       "bypass_position": {
         "name": "Bypass position"
       },

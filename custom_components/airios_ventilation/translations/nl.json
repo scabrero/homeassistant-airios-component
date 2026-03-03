@@ -284,6 +284,12 @@
       "filter_remaining_percent": {
         "name": "Filter te resterend"
       },
+      "indoor_humidity": {
+        "name": "Relatieve Vochtigheid Binnen"
+      },
+      "outdoor_humidity": {
+        "name": "Relatieve Vochtigheid Buiten"
+      },
       "bypass_position": {
         "name": "Bypasspositie"
       },

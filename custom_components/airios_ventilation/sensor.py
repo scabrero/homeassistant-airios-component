@@ -293,13 +293,20 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     ),
     # VMD07-RP13 specific
     AiriosSensorEntityDescription(
-        ap=AiriosVMDProperty.CO2_LEVEL,
-        key=AiriosVMDProperty.CO2_LEVEL.name.casefold(),
-        translation_key="co2_level",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
-        value_fn=co2_value_fn,
+        ap=AiriosVMDProperty.HUMIDITY_INDOOR,
+        key=AiriosVMDProperty.HUMIDITY_INDOOR.name.casefold(),
+        translation_key = "indoor_humidity",
+        state_class = SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
     ),
+    AiriosSensorEntityDescription(
+        ap=AiriosVMDProperty.HUMIDITY_OUTDOOR,
+        key=AiriosVMDProperty.HUMIDITY_OUTDOOR.name.casefold(),
+        translation_key = "outdoor_humidity",
+        state_class = SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    # VMDVentilationMode, VMDVentilationSpeed
     AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.CO2_CONTROL_SETPOINT,
         key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
