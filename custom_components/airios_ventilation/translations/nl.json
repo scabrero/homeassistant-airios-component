@@ -298,6 +298,12 @@
       },
       "override_remaining_time": {
         "name": "Tijdelijke override resterende tijd"
+      },
+      "ventilation_mode": {
+        "name": "Ventilatiemodus"
+      },
+      "ventilation_speed": {
+        "name": "Ventilatiestand"
       }
     },
     "number": {
