@@ -28,9 +28,9 @@ from pyairios.constants import (
     VMDErrorCode,
     VMDHeater,
     VMDHeaterStatus,
+    VMDHumidity,
     VMDSensorStatus,
     VMDTemperature,
-    VMDHumidity,
 )
 from pyairios.properties import (
     AiriosBridgeProperty,
@@ -124,11 +124,13 @@ def postheater_value_fn(v: VMDHeater) -> StateType:
         return v.level
     return None
 
+
 def humidity_fn(v: VMDHumidity) -> StateType:
     """Convert VMDHumidity to sensor's value 0-100."""
     if v.status == VMDSensorStatus.OK:
         return v.humidity
     return None
+
 
 SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
@@ -309,16 +311,16 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
     AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.HUMIDITY_INDOOR,
         key=AiriosVMDProperty.HUMIDITY_INDOOR.name.casefold(),
-        translation_key = "indoor_humidity",
-        state_class = SensorStateClass.MEASUREMENT,
+        translation_key="indoor_humidity",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         value_fn=humidity_fn,
     ),
     AiriosSensorEntityDescription(
         ap=AiriosVMDProperty.HUMIDITY_OUTDOOR,
         key=AiriosVMDProperty.HUMIDITY_OUTDOOR.name.casefold(),
-        translation_key = "outdoor_humidity",
-        state_class = SensorStateClass.MEASUREMENT,
+        translation_key="outdoor_humidity",
+        state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         value_fn=humidity_fn,
     ),
