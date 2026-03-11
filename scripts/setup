@@ -2,11 +2,17 @@
 
 set -e
 
+if ! command -v uv 2>&1 >/dev/null; then
+  "uv not installed."
+  exit 1
+fi
+
 cd "$(dirname "$0")/.."
 
-if [ ! -n "$VIRTUAL_ENV" ]; then
-  python3 -m venv venv
+if [ -z "${VIRTUAL_ENV}" ]; then
+  uv venv venv
   source venv/bin/activate
 fi
 
-python3 -m pip install --requirement requirements.txt
+uv sync --active --group dev
+pre-commit install
