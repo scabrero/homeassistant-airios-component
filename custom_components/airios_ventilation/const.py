@@ -1,3 +1,4 @@
+# Copyright (c) S. Cabrero <@scabrero>
 """Constants for the Airios integration."""
 
 from enum import IntEnum, auto

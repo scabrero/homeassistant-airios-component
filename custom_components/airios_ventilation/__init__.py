@@ -1,3 +1,4 @@
+# Copyright (c) S. Cabrero <@scabrero>
 """The Airios integration."""
 
 from __future__ import annotations

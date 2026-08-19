@@ -1,3 +1,4 @@
+# Copyright (c) S. Cabrero <@scabrero>
 """Fan platform for the Airios integration."""
 
 from __future__ import annotations
@@ -368,7 +369,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             raise HomeAssistantError(msg)
         infomsg = (
             "Setting fans speeds for low preset on node "
-            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
         )
         _LOGGER.info(infomsg)
         try:
@@ -404,7 +405,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             raise HomeAssistantError(msg)
         infomsg = (
             "Setting fans speeds for medium preset on node "
-            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
         )
         _LOGGER.info(infomsg)
         try:
@@ -441,7 +442,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
 
         infomsg = (
             "Setting fans speeds for high preset on node "
-            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%",
+            f"{dev} to: supply={supply_fan_speed}%%, exhaust={exhaust_fan_speed}%%"
         )
         _LOGGER.info(infomsg)
         try:

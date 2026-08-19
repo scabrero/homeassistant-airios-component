@@ -1,3 +1,4 @@
+# Copyright (c) S. Cabrero <@scabrero>
 """Number platform for the Airios integration."""
 
 from __future__ import annotations
