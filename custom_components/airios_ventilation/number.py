@@ -13,8 +13,8 @@ from homeassistant.components.number import (
     NumberMode,
 )
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     EntityCategory,
+    UnitOfRatio,
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
@@ -132,7 +132,7 @@ NUMBER_ENTITIES: tuple[AiriosNumberEntityDescription, ...] = (
         translation_key="co2_setpoint",
         native_min_value=400,
         native_max_value=2300,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         native_step=1,
         entity_category=EntityCategory.CONFIG,
         mode=NumberMode.BOX,

@@ -14,10 +14,10 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
-    CONCENTRATION_PARTS_PER_MILLION,
     PERCENTAGE,
     REVOLUTIONS_PER_MINUTE,
     EntityCategory,
+    UnitOfRatio,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -305,7 +305,7 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key=AiriosVMDProperty.CO2_LEVEL.name.casefold(),
         translation_key="co2_level",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         value_fn=co2_value_fn,
     ),
     AiriosSensorEntityDescription(
@@ -344,7 +344,7 @@ SENSOR_ENTITIES: tuple[AiriosSensorEntityDescription, ...] = (
         key=AiriosVMDProperty.CO2_CONTROL_SETPOINT.name.casefold(),
         translation_key="co2_setpoint",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CONCENTRATION_PARTS_PER_MILLION,
+        native_unit_of_measurement=UnitOfRatio.PARTS_PER_MILLION,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
