@@ -1,4 +1,6 @@
-# Copyright (c) S. Cabrero <@scabrero>
+# SPDX-FileCopyrightText: 2024-2026 S. Cabrero <@scabrero>
+#
+# SPDX-License-Identifier: Apache
 """Constants for the Airios integration."""
 
 from enum import IntEnum, auto
