@@ -18,6 +18,7 @@ from homeassistant.const import (
 from homeassistant.exceptions import ConfigEntryError, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.device_registry import async_get_device_id_by_identifier
 from pyairios import Airios
 from pyairios.client import (
     AiriosBaseTransport,
@@ -150,6 +151,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
         model_id=f"0x{product_id:08X}",
         sw_version=f"0x{sw_version:04X}",
     )
+    # store the bridge's hass device_id, lookup by identifier
+    try:
+        coordinator.bridge_device_id = async_get_device_id_by_identifier(
+            coordinator.hass, (DOMAIN, str(rf_address)), config_entry_id=entry.entry_id
+        )
+    except ValueError as ex:
+        _LOGGER.info(
+            "Failed to get bridge RF address: %s",
+            ex,
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     # sets up Airios fans, sensors etc.

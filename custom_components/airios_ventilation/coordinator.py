@@ -41,6 +41,7 @@ class AiriosDataUpdateCoordinator(DataUpdateCoordinator[AiriosData]):
         )
         self.api = api
         self.fetch_result_status = fetch_result_status
+        self.bridge_device_id: str | None = None
 
     async def _async_update_data(self) -> AiriosData:
         """Fetch state by polling API and forward it to Home Assistant."""
