@@ -139,7 +139,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: AiriosConfigEntry) -> bo
     entry.runtime_data = coordinator
 
     # Always register a device for the bridge. It is necessary to set the
-    # via_device attribute for the bound nodes.
+    # via_device_id attribute for the bound nodes.
     device_registry = dr.async_get(hass)
     device_registry.async_get_or_create(
         config_entry_id=entry.entry_id,
