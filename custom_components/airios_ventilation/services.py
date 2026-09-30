@@ -80,8 +80,7 @@ async def _get_api_device(service_call: ServiceCall) -> BRDG02R13:
     for dev_id in (
         device.identifiers if isinstance(device, dr.DeviceEntry) else {device}
     ):
-        if dev_id[0] == DOMAIN:
-            rf_address = int(dev_id[1])
+        rf_address = int(dev_id)  # since HA 2026.9.0 only single device_entry
 
     if not rf_address:
         raise ServiceValidationError(
