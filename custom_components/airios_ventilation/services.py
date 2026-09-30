@@ -71,12 +71,13 @@ async def _get_api_device(service_call: ServiceCall) -> BRDG02R13:
         )
 
     rf_address: int | None = None
-    if isinstance(device, dr.DeviceEntry):
+    if isinstance(device, dr.DeviceEntry | dr.ChildDeviceEntry):
+        # identifier is a set: {DOMAIN, rf_address}
         for domain, address in device.identifiers:
             if domain == DOMAIN:
                 rf_address = int(address)
                 break
-    else:  # identifier tuple: (DOMAIN, rf_address)
+    else:  # identifier is a tuple: (DOMAIN, rf_address)
         rf_address = int(device[1])
 
     if not rf_address:
