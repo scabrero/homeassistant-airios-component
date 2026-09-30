@@ -109,7 +109,13 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             sw_version=f"0x{sw_version:04X}",
         )
 
-        if coordinator.bridge_device_id is not None:
+        if (
+            (r1 := coordinator.data.nodes.get(coordinator.data.bridge_key))
+            and (r2 := r1.get(AiriosDeviceProperty.RF_ADDRESS))
+            and (brdg_rf_address := r2.value)
+            and (brdg_rf_address != self.rf_address)
+            and coordinator.bridge_device_id is not None
+        ):
             self._attr_device_info["via_device_id"] = coordinator.bridge_device_id
 
         self._attr_unique_id = f"{self.rf_address}-{key}"
