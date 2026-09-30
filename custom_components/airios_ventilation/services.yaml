@@ -1,4 +1,3 @@
-# Copyright (c) S. Cabrero <@scabrero>
 factory_reset:
   fields:
     device_id:
