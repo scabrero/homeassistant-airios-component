@@ -69,8 +69,7 @@ async def _supported_models(
     """
     Get supported models to use in config_flow BindController/BindAccessory.
 
-    :param coordinator: Coordinator to Airios lib
-    :param prefix: filter for device types (use model property?)
+    :param device_type: filter for device types
     :return: dict of supported models matching prefix
     """
     return {
