@@ -59,28 +59,25 @@ async def _get_api_device(service_call: ServiceCall) -> BRDG02R13:
             translation_placeholders={"service_name": "device_reset"},
         )
 
-    config_entry = None
-    for entry_id in device.config_entries:
-        config_entry = service_call.hass.config_entries.async_get_entry(entry_id)
-        if config_entry is not None and config_entry.domain == DOMAIN:
-            break
+    config_entry = service_call.hass.config_entries.async_get_entry(
+        device.config_entry_id
+    )
 
-    if (
-        config_entry is None
-        or device is None
-        or config_entry.state != ConfigEntryState.LOADED
-    ):
+    if config_entry is None or config_entry.state != ConfigEntryState.LOADED:
         raise ServiceValidationError(
             translation_domain=DOMAIN,
             translation_key="invalid_config_entry",
             translation_placeholders={"service_name": "device_reset"},
         )
 
-    rf_address = None
-    for dev_id in (
-        device.identifiers if isinstance(device, dr.DeviceEntry) else {device}
-    ):
-        rf_address = int(dev_id)  # since HA 2026.9.0 only single device_entry
+    rf_address: int | None = None
+    if isinstance(device, dr.DeviceEntry):
+        for domain, address in device.identifiers:
+            if domain == DOMAIN:
+                rf_address = int(address)
+                break
+    else:  # identifier tuple: (DOMAIN, rf_address)
+        rf_address = int(device[1])
 
     if not rf_address:
         raise ServiceValidationError(
