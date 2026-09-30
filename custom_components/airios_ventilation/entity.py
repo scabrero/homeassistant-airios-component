@@ -115,7 +115,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             and (brdg_rf_address := r2.value)
             and (brdg_rf_address != self.rf_address)
         ):
-            self._attr_device_info["via_device"] = (DOMAIN, str(brdg_rf_address))
+            self._attr_device_info["via_device_id"] = str(brdg_rf_address)
 
         self._attr_unique_id = f"{self.rf_address}-{key}"
         _LOGGER.debug("Entity %s has unique id %s", key, self._attr_unique_id)
