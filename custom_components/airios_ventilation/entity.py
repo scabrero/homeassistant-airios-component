@@ -137,7 +137,7 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
         """Fetch result for entity."""
         _LOGGER.debug(
             "Updating node=%s, property=%s",
-            f"0x{self.rf_address}:08X",
+            f"0x{self.rf_address:08X}",
             self.entity_description.key,
         )
 
