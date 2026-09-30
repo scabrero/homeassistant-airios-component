@@ -325,9 +325,9 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
         dev = await self.api().node(self.modbus_address)
         data = self.coordinator.data.nodes[self.modbus_address]
         if (
-            AiriosVMDProperty.FAN_SPEED_AWAY_SUPPLY,
-            AiriosVMDProperty.FAN_SPEED_AWAY_EXHAUST,
-        ) not in data:
+            AiriosVMDProperty.FAN_SPEED_AWAY_SUPPLY not in data
+            or AiriosVMDProperty.FAN_SPEED_AWAY_EXHAUST not in data
+        ):
             msg = f"Property not supported by device {dev!s}."
             raise HomeAssistantError(msg)
         msg = (
@@ -361,9 +361,9 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
         dev = await self.api().node(self.modbus_address)
         data = self.coordinator.data.nodes[self.modbus_address]
         if (
-            AiriosVMDProperty.FAN_SPEED_LOW_SUPPLY,
-            AiriosVMDProperty.FAN_SPEED_LOW_EXHAUST,
-        ) not in data:
+            AiriosVMDProperty.FAN_SPEED_LOW_SUPPLY not in data
+            or AiriosVMDProperty.FAN_SPEED_LOW_EXHAUST not in data
+        ):
             msg = f"Property not supported by device {dev!s}."
             raise HomeAssistantError(msg)
         infomsg = (
@@ -397,9 +397,9 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
         dev = await self.api().node(self.modbus_address)
         data = self.coordinator.data.nodes[self.modbus_address]
         if (
-            AiriosVMDProperty.FAN_SPEED_MID_SUPPLY,
-            AiriosVMDProperty.FAN_SPEED_MID_EXHAUST,
-        ) not in data:
+            AiriosVMDProperty.FAN_SPEED_MID_SUPPLY not in data
+            or AiriosVMDProperty.FAN_SPEED_MID_EXHAUST not in data
+        ):
             msg = f"Property not supported by device {dev!s}."
             raise HomeAssistantError(msg)
         infomsg = (
@@ -433,9 +433,9 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
         dev = await self.api().node(self.modbus_address)
         data = self.coordinator.data.nodes[self.modbus_address]
         if (
-            AiriosVMDProperty.FAN_SPEED_HIGH_SUPPLY,
-            AiriosVMDProperty.FAN_SPEED_HIGH_EXHAUST,
-        ) not in data:
+            AiriosVMDProperty.FAN_SPEED_HIGH_SUPPLY not in data
+            or AiriosVMDProperty.FAN_SPEED_HIGH_EXHAUST not in data
+        ):
             msg = f"Property not supported by device {dev!s}."
             raise HomeAssistantError(msg)
 
@@ -469,9 +469,9 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
         dev = await self.api().node(self.modbus_address)
         data = self.coordinator.data.nodes[self.modbus_address]
         if (
-            AiriosVMDProperty.REQUESTED_VENTILATION_SPEED,
-            AiriosVMDProperty.CAPABILITIES,
-        ) not in data:
+            AiriosVMDProperty.REQUESTED_VENTILATION_SPEED not in data
+            or AiriosVMDProperty.CAPABILITIES not in data
+        ):
             msg = f"Property not supported by device {dev!s}."
             raise HomeAssistantError(msg)
 
