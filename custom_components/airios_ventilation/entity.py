@@ -8,10 +8,7 @@ from dataclasses import dataclass
 
 from homeassistant.const import CONF_ADDRESS
 from homeassistant.exceptions import ConfigEntryNotReady, PlatformNotReady
-from homeassistant.helpers.device_registry import (
-    DeviceInfo,
-    async_get_device_id_by_identifier,
-)
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from pyairios.properties import AiriosBaseProperty, AiriosDeviceProperty
 
@@ -112,19 +109,8 @@ class AiriosEntity(CoordinatorEntity[AiriosDataUpdateCoordinator]):
             sw_version=f"0x{sw_version:04X}",
         )
 
-        if (
-            (r1 := coordinator.data.nodes.get(coordinator.data.bridge_key))
-            and (r2 := r1.get(AiriosDeviceProperty.RF_ADDRESS))
-            and (brdg_rf_address := r2.value)
-            and (brdg_rf_address != self.rf_address)
-        ):
-            # lookup bridge device_id by identifier
-            via_id = async_get_device_id_by_identifier(
-                coordinator.hass,
-                (DOMAIN, brdg_rf_address),
-                config_entry_id=self.coordinator.config_entry.entry_id,
-            )
-            self._attr_device_info["via_device_id"] = via_id
+        if coordinator.bridge_device_id is not None:
+            self._attr_device_info["via_device_id"] = coordinator.bridge_device_id
 
         self._attr_unique_id = f"{self.rf_address}-{key}"
         _LOGGER.debug("Entity %s has unique id %s", key, self._attr_unique_id)
