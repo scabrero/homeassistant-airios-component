@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: 2024-2026 S. Cabrero <@scabrero>
-#
-# SPDX-License-Identifier: Apache
 """The Airios integration."""
 
 from __future__ import annotations
