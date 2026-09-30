@@ -134,12 +134,12 @@ async def async_setup_entry(
     platform.async_register_entity_service(
         SERVICE_SET_PRESET_FAN_SPEED_MEDIUM,
         SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
-        "async_set_preset_fan_speed_low",
+        "async_set_preset_fan_speed_medium",
     )
     platform.async_register_entity_service(
         SERVICE_SET_PRESET_FAN_SPEED_HIGH,
         SERVICE_SCHEMA_SET_PRESET_FAN_SPEED,
-        "async_set_preset_fan_speed_low",
+        "async_set_preset_fan_speed_high",
     )
     platform.async_register_entity_service(
         SERVICE_SET_PRESET_MODE_DURATION,
@@ -380,7 +380,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             if not await dev.set(
                 AiriosVMDProperty.FAN_SPEED_LOW_EXHAUST, exhaust_fan_speed
             ):
-                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                msg = f"Failed to set exhaust fan speed to {exhaust_fan_speed}"
                 raise HomeAssistantError(msg)
         except AiriosException as ex:
             msg = f"Failed to set fan speeds: {ex}"
@@ -416,7 +416,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             if not await dev.set(
                 AiriosVMDProperty.FAN_SPEED_MID_EXHAUST, exhaust_fan_speed
             ):
-                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                msg = f"Failed to set exhaust fan speed to {exhaust_fan_speed}"
                 raise HomeAssistantError(msg)
         except AiriosException as ex:
             msg = f"Failed to set fan speeds: {ex}"
@@ -454,7 +454,7 @@ class AiriosFanEntity(  # pyright: ignore[reportIncompatibleVariableOverride]
             if not await dev.set(
                 AiriosVMDProperty.FAN_SPEED_HIGH_EXHAUST, exhaust_fan_speed
             ):
-                msg = f"Failed to set exhaust fan speed to {supply_fan_speed}"
+                msg = f"Failed to set exhaust fan speed to {exhaust_fan_speed}"
                 raise HomeAssistantError(msg)
         except AiriosException as ex:
             msg = f"Failed to set fan speeds: {ex}"
