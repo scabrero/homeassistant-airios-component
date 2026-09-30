@@ -145,11 +145,11 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
         conf_port = CONF_DEFAULT_PORT
         conf_modbus_address = CONF_DEFAULT_NETWORK_MODBUS_ADDRESS
         if self.source == SOURCE_RECONFIGURE:
-            if hasattr(self._reconfigure_data, CONF_HOST):
+            if CONF_HOST in self._reconfigure_data:
                 conf_host = self._reconfigure_data[CONF_HOST]
-            if hasattr(self._reconfigure_data, CONF_PORT):
+            if CONF_PORT in self._reconfigure_data:
                 conf_port = self._reconfigure_data[CONF_PORT]
-            if hasattr(self._reconfigure_data, CONF_ADDRESS):
+            if CONF_ADDRESS in self._reconfigure_data:
                 conf_modbus_address = self._reconfigure_data[CONF_ADDRESS]
         schema = vol.Schema(
             {
@@ -208,9 +208,9 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
         conf_device = vol.UNDEFINED
         conf_modbus_address = CONF_DEFAULT_SERIAL_MODBUS_ADDRESS
         if self.source == SOURCE_RECONFIGURE:
-            if hasattr(self._reconfigure_data, CONF_DEVICE):
+            if CONF_DEVICE in self._reconfigure_data:
                 conf_device = self._reconfigure_data[CONF_DEVICE]
-            if hasattr(self._reconfigure_data, CONF_ADDRESS):
+            if CONF_ADDRESS in self._reconfigure_data:
                 conf_modbus_address = self._reconfigure_data[CONF_ADDRESS]
 
         schema = vol.Schema(
@@ -246,9 +246,7 @@ class AiriosConfigFlow(ConfigFlow, domain=DOMAIN):
                 return await self._finish(data)
 
         conf_device = vol.UNDEFINED
-        if self.source == SOURCE_RECONFIGURE and hasattr(
-            self._reconfigure_data, CONF_DEVICE
-        ):
+        if self.source == SOURCE_RECONFIGURE and CONF_DEVICE in self._reconfigure_data:
             conf_device = self._reconfigure_data[CONF_DEVICE]
 
         schema = vol.Schema({vol.Required(CONF_DEVICE, default=conf_device): str})
